@@ -1,31 +1,31 @@
 {
   "submissions": [
     {
-      "submitted_at": "2026-10-04T04:08:33+00:00",
+      "submitted_at": "2026-10-04T04:15:22+00:00",
       "seed": 6,
-      "n_per_condition": 20,
-      "pilot": 20,
-      "est_total_usd": 17.2016,
+      "n_per_condition": 100,
+      "pilot": null,
+      "est_total_usd": 26.4144,
       "max_cost_usd": 30.0,
       "batches": {
         "claude-opus-5-5": {
-          "batch_id": "msgbatch_01RZQNPhHa1myotb59ayHsyb",
-          "n_requests": 160,
+          "batch_id": "msgbatch_01KaDB7gbappyAMZesD1Jpng",
+          "n_requests": 800,
           "processing_status": "in_progress"
         },
         "claude-sonnet-5-5": {
-          "batch_id": "msgbatch_018Vu6KHACv34ZQyt7s4gj9w",
-          "n_requests": 160,
+          "batch_id": "msgbatch_013n7KTRsxtfsh5byNPhEoo8",
+          "n_requests": 800,
           "processing_status": "in_progress"
         },
         "claude-haiku-4-5": {
-          "batch_id": "msgbatch_01FDxZTRx6Uqyokb2tTyLu4J",
-          "n_requests": 160,
+          "batch_id": "msgbatch_01HZH6hSdRaw6yYKQoB1gvqe",
+          "n_requests": 800,
           "processing_status": "in_progress"
         },
         "claude-fable-5-1": {
-          "batch_id": "msgbatch_01HTntc7TEXQvaSQNgQKgd5h",
-          "n_requests": 160,
+          "batch_id": "msgbatch_01LiLHose62NVpezkWiiDwZU",
+          "n_requests": 800,
           "processing_status": "in_progress"
         }
       }

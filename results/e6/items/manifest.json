@@ -1,7 +1,7 @@
 {
   "seed": 6,
-  "n_per_condition": 20,
-  "pilot": true,
+  "n_per_condition": 100,
+  "pilot": false,
   "config": {
     "v1": {
       "alpha": 0.3,
@@ -35,27 +35,27 @@
   },
   "files": {
     "V1.jsonl": {
-      "sha256": "10123b3ef61bec94903fbe2244fa63bb8df501c407dbf760fd90185fd1f85607",
-      "n_items": 80,
+      "sha256": "c78808a86a620f820a9ab51145206e5de347b93918c1429bae673fb4658d99a3",
+      "n_items": 400,
       "n_by_condition": {
-        "stated": 60,
-        "blind": 20
+        "stated": 300,
+        "blind": 100
       }
     },
     "V2.jsonl": {
-      "sha256": "9ddd8f79df15fd64ccc1a8207d098793955e891f743425d487e5275da2cbc5ee",
-      "n_items": 40,
+      "sha256": "5b114c29c6e15828e63ef03ebd55fe5a763000642660f451fadb48f2ac309ac0",
+      "n_items": 200,
       "n_by_condition": {
-        "stated": 20,
-        "unstated": 20
+        "stated": 100,
+        "unstated": 100
       }
     },
     "V3.jsonl": {
-      "sha256": "d7a1931c1d71acfdfd60b94ea231683d027643e8e7e967c96aef94f2f6354041",
-      "n_items": 40,
+      "sha256": "7decdcd0eb4f5856c1ed0d8c6151a92a3bae7ebe543239ef3253ec58ed9a4dfb",
+      "n_items": 200,
       "n_by_condition": {
-        "measured": 20,
-        "unmeasured": 20
+        "measured": 100,
+        "unmeasured": 100
       }
     }
   }

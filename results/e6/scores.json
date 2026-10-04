@@ -1,0 +1,1631 @@
+{
+  "meta": {
+    "items_dir": "results/e6/items",
+    "n_items": 160,
+    "n_boot": 2000,
+    "probes": [
+      "V1",
+      "V2",
+      "V3"
+    ]
+  },
+  "models": {
+    "claude-fable-5-1": {
+      "categories": {
+        "V1/blind": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V1/stated": {
+          "ok": 60,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/stated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/unstated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/measured": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/unmeasured": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        }
+      },
+      "stop_reasons": {
+        "end_turn": 160
+      },
+      "unmatched_records": 0,
+      "V1": {
+        "stated": {
+          "mae": {
+            "value": 0.007224308233085569,
+            "ci": [
+              0.0017240629576495406,
+              0.01804134677972432
+            ],
+            "n": 60,
+            "target": 0.0
+          },
+          "mae_adj": {
+            "value": 0.018554513825702036,
+            "ci": [
+              0.0022462963105755024,
+              0.050450799190115254
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_crude": {
+            "value": 0.0018383412910497068,
+            "ci": [
+              0.0014428192203053709,
+              0.0022485332848328314
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_marg": {
+            "value": 0.0012800695825049627,
+            "ci": [
+              0.000944545228628231,
+              0.0016536903578528788
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "determinable_true": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 60,
+            "target": 1.0
+          },
+          "n_out_of_range": 0,
+          "split_slope": {
+            "value": 0.9814502846196242,
+            "ci": [
+              0.888074508174804,
+              1.0169443338004924
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_r2": {
+            "value": 0.8532350889561338,
+            "ci": [
+              0.5545575817710586,
+              0.9999325839365273
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_contexts_incomplete": 0,
+          "split_contexts_flat": 0,
+          "reversal_agree_adj": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_crude": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_both": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          }
+        },
+        "blind": {
+          "determinable_false": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "mae_vs_mixture": {
+            "value": 0.09456671423354848,
+            "ci": [
+              0.07279946683278214,
+              0.11844964257414323
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "nearest_adj": {
+            "value": 0.35,
+            "ci": [
+              0.15,
+              0.55
+            ],
+            "n": 20
+          },
+          "nearest_crude": {
+            "value": 0.65,
+            "ci": [
+              0.45,
+              0.85
+            ],
+            "n": 20
+          },
+          "nearest_marg": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20
+          }
+        }
+      },
+      "V2": {
+        "stated": {
+          "mae_crossing": {
+            "value": 0.08432187500000006,
+            "ci": [
+              3.125000000165235e-06,
+              0.23018125
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 16,
+            "target": 1.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_rho=-1": {
+            "value": -1.0000000000000002,
+            "ci": [
+              -1.0000000000000033,
+              -0.9999999999999998
+            ],
+            "n": 4,
+            "target": -1.0
+          },
+          "slope_rho=-0.5": {
+            "value": -0.4999939551469914,
+            "ci": [
+              -0.5001787629603134,
+              -0.49985815602836975
+            ],
+            "n": 3,
+            "target": -0.5
+          },
+          "slope_rho=0": {
+            "value": -5.827792776540337e-16,
+            "ci": [
+              -2.6324197382932e-15,
+              1.2461687011098698e-15
+            ],
+            "n": 3,
+            "target": 0.0
+          },
+          "slope_rho=0.5": {
+            "value": 0.4999999999999997,
+            "ci": [
+              0.49999999999999956,
+              0.4999999999999999
+            ],
+            "n": 3,
+            "target": 0.5
+          },
+          "slope_rho=1": {
+            "value": 0.03371408802971886,
+            "ci": [
+              -4.664429530201368,
+              0.16174342385289883
+            ],
+            "n": 3,
+            "target": 1.0
+          },
+          "rho_tracking_slope": {
+            "value": 0.6532644566316287,
+            "ci": [
+              0.03258748301874384,
+              1.0126949132434713
+            ],
+            "n": 16,
+            "target": 1.0
+          }
+        },
+        "unstated": {
+          "mae_crossing": {
+            "value": 6.250000000012929e-05,
+            "ci": [
+              1.8468299806118084e-16,
+              0.0001687500000000959
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_crossing": {
+            "value": 0.00014770282582231658,
+            "ci": [
+              -1.8677874499934626e-05,
+              0.00047503977091494263
+            ],
+            "n": 16,
+            "target": 0.0
+          }
+        }
+      },
+      "V3": {
+        "measured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "point_mae": {
+            "value": 0.0033315903069739473,
+            "ci": [
+              0.002095184779501007,
+              0.00489109659729606
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "point_missing": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 0.0
+          }
+        },
+        "unmeasured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "bounds_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "point_given": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 0.0
+          }
+        }
+      }
+    },
+    "claude-haiku-4-5": {
+      "categories": {
+        "V1/blind": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V1/stated": {
+          "ok": 60,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/stated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/unstated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/measured": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/unmeasured": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        }
+      },
+      "stop_reasons": {
+        "end_turn": 160
+      },
+      "unmatched_records": 0,
+      "V1": {
+        "stated": {
+          "mae": {
+            "value": 0.04562534827537134,
+            "ci": [
+              0.020595399354579692,
+              0.07585928009116577
+            ],
+            "n": 60,
+            "target": 0.0
+          },
+          "mae_adj": {
+            "value": 0.024422264498142207,
+            "ci": [
+              0.002682242500550436,
+              0.05755301818509279
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_crude": {
+            "value": 0.11117371074546685,
+            "ci": [
+              0.04648620413963393,
+              0.1854247964822975
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_marg": {
+            "value": 0.0012800695825049627,
+            "ci": [
+              0.000944545228628231,
+              0.0016536903578528788
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "determinable_true": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 60,
+            "target": 1.0
+          },
+          "n_out_of_range": 0,
+          "split_slope": {
+            "value": 0.9225382884140746,
+            "ci": [
+              0.4891838695078529,
+              1.3459990239676747
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_r2": {
+            "value": 0.4165746409393106,
+            "ci": [
+              0.09590178213114393,
+              0.7866244597737984
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_contexts_incomplete": 0,
+          "split_contexts_flat": 0,
+          "reversal_agree_adj": {
+            "value": 0.9166666666666666,
+            "ci": [
+              0.75,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_crude": {
+            "value": 0.8333333333333334,
+            "ci": [
+              0.5833333333333334,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_both": {
+            "value": 0.8333333333333334,
+            "ci": [
+              0.5833333333333334,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          }
+        },
+        "blind": {
+          "determinable_false": {
+            "value": 0.55,
+            "ci": [
+              0.35,
+              0.75
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "mae_vs_mixture": {
+            "value": 0.10590013105998206,
+            "ci": [
+              0.07886830127886704,
+              0.13622307510546147
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "nearest_adj": {
+            "value": 0.75,
+            "ci": [
+              0.55,
+              0.95
+            ],
+            "n": 20
+          },
+          "nearest_crude": {
+            "value": 0.25,
+            "ci": [
+              0.05,
+              0.45
+            ],
+            "n": 20
+          },
+          "nearest_marg": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20
+          }
+        }
+      },
+      "V2": {
+        "stated": {
+          "mae_crossing": {
+            "value": 3.125000000127158e-06,
+            "ci": [
+              1.1271365785159303e-16,
+              9.37500000006402e-06
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 0.875,
+            "ci": [
+              0.6875,
+              1.0
+            ],
+            "n": 16,
+            "target": 1.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_rho=-1": {
+            "value": -1.0000000000000002,
+            "ci": [
+              -1.0000000000000033,
+              -0.9999999999999998
+            ],
+            "n": 4,
+            "target": -1.0
+          },
+          "slope_rho=-0.5": {
+            "value": -0.4999939551469914,
+            "ci": [
+              -0.5001787629603134,
+              -0.49985815602836975
+            ],
+            "n": 3,
+            "target": -0.5
+          },
+          "slope_rho=0": {
+            "value": -5.827792776540337e-16,
+            "ci": [
+              -2.6324197382932e-15,
+              1.2461687011098698e-15
+            ],
+            "n": 3,
+            "target": 0.0
+          },
+          "slope_rho=0.5": {
+            "value": 0.4999999999999997,
+            "ci": [
+              0.49999999999999956,
+              0.4999999999999999
+            ],
+            "n": 3,
+            "target": 0.5
+          },
+          "slope_rho=1": {
+            "value": 1.0,
+            "ci": [
+              0.9999999999999997,
+              1.0000000000000078
+            ],
+            "n": 3,
+            "target": 1.0
+          },
+          "rho_tracking_slope": {
+            "value": 0.9999999141942608,
+            "ci": [
+              0.9999923168998337,
+              1.0000088383558623
+            ],
+            "n": 16,
+            "target": 1.0
+          }
+        },
+        "unstated": {
+          "mae_crossing": {
+            "value": 0.0012562500000001297,
+            "ci": [
+              5.0000000000245635e-05,
+              0.003418906250000123
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 0.25,
+            "ci": [
+              0.0625,
+              0.5
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_crossing": {
+            "value": 0.0009242081562061798,
+            "ci": [
+              -0.00039741043770763257,
+              0.0049350808999637985
+            ],
+            "n": 16,
+            "target": 0.0
+          }
+        }
+      },
+      "V3": {
+        "measured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "point_mae": {
+            "value": 0.0033664402160464907,
+            "ci": [
+              0.0021587763677118465,
+              0.004874555412603213
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "point_missing": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 0.0
+          }
+        },
+        "unmeasured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "bounds_acc": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "point_given": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 0.0
+          }
+        }
+      }
+    },
+    "claude-opus-5-5": {
+      "categories": {
+        "V1/blind": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V1/stated": {
+          "ok": 60,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/stated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/unstated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/measured": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/unmeasured": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        }
+      },
+      "stop_reasons": {
+        "end_turn": 160
+      },
+      "unmatched_records": 0,
+      "V1": {
+        "stated": {
+          "mae": {
+            "value": 0.002021870099520461,
+            "ci": [
+              0.0016925446461207294,
+              0.0024003050327214017
+            ],
+            "n": 60,
+            "target": 0.0
+          },
+          "mae_adj": {
+            "value": 0.0029571994250067193,
+            "ci": [
+              0.002231656266099201,
+              0.003740371282595698
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_crude": {
+            "value": 0.001828341291049701,
+            "ci": [
+              0.0014469914768340348,
+              0.002234884766587098
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_marg": {
+            "value": 0.0012800695825049627,
+            "ci": [
+              0.000944545228628231,
+              0.0016536903578528788
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "determinable_true": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 60,
+            "target": 1.0
+          },
+          "n_out_of_range": 0,
+          "split_slope": {
+            "value": 1.0143832808555187,
+            "ci": [
+              1.0107309366951023,
+              1.0190727139497864
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_r2": {
+            "value": 0.9998500052425793,
+            "ci": [
+              0.9996964392404956,
+              0.9999334834593154
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_contexts_incomplete": 0,
+          "split_contexts_flat": 0,
+          "reversal_agree_adj": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_crude": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_both": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          }
+        },
+        "blind": {
+          "determinable_false": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "mae_vs_mixture": {
+            "value": 0.08685514963839129,
+            "ci": [
+              0.06675795584215546,
+              0.1091156243001607
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "nearest_adj": {
+            "value": 0.35,
+            "ci": [
+              0.15,
+              0.55
+            ],
+            "n": 20
+          },
+          "nearest_crude": {
+            "value": 0.65,
+            "ci": [
+              0.45,
+              0.85
+            ],
+            "n": 20
+          },
+          "nearest_marg": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20
+          }
+        }
+      },
+      "V2": {
+        "stated": {
+          "mae_crossing": {
+            "value": 3.125000000127158e-06,
+            "ci": [
+              1.1271365785159303e-16,
+              9.37500000006402e-06
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 16,
+            "target": 1.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_rho=-1": {
+            "value": -1.0000000000000002,
+            "ci": [
+              -1.0000000000000033,
+              -0.9999999999999998
+            ],
+            "n": 4,
+            "target": -1.0
+          },
+          "slope_rho=-0.5": {
+            "value": -0.4999939551469914,
+            "ci": [
+              -0.5001787629603134,
+              -0.49985815602836975
+            ],
+            "n": 3,
+            "target": -0.5
+          },
+          "slope_rho=0": {
+            "value": -5.827792776540337e-16,
+            "ci": [
+              -2.6324197382932e-15,
+              1.2461687011098698e-15
+            ],
+            "n": 3,
+            "target": 0.0
+          },
+          "slope_rho=0.5": {
+            "value": 0.4999999999999997,
+            "ci": [
+              0.49999999999999956,
+              0.4999999999999999
+            ],
+            "n": 3,
+            "target": 0.5
+          },
+          "slope_rho=1": {
+            "value": 1.0,
+            "ci": [
+              0.9999999999999997,
+              1.0000000000000078
+            ],
+            "n": 3,
+            "target": 1.0
+          },
+          "rho_tracking_slope": {
+            "value": 0.9999999141942608,
+            "ci": [
+              0.9999923168998337,
+              1.0000088383558623
+            ],
+            "n": 16,
+            "target": 1.0
+          }
+        },
+        "unstated": {
+          "mae_crossing": {
+            "value": 4.3750000000148705e-05,
+            "ci": [
+              1.9168694409543718e-16,
+              0.00010015625000023343
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_crossing": {
+            "value": 1.621447703641871e-05,
+            "ci": [
+              -7.872416538709871e-05,
+              0.00014814816040262103
+            ],
+            "n": 16,
+            "target": 0.0
+          }
+        }
+      },
+      "V3": {
+        "measured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "point_mae": {
+            "value": 0.0033386402160464857,
+            "ci": [
+              0.0020949010854111137,
+              0.004901084307712752
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "point_missing": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 0.0
+          }
+        },
+        "unmeasured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "bounds_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "point_given": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 0.0
+          }
+        }
+      }
+    },
+    "claude-sonnet-5-5": {
+      "categories": {
+        "V1/blind": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V1/stated": {
+          "ok": 60,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/stated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V2/unstated": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/measured": {
+          "ok": 19,
+          "refusal": 0,
+          "parse_failure": 1,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        },
+        "V3/unmeasured": {
+          "ok": 20,
+          "refusal": 0,
+          "parse_failure": 0,
+          "errored": 0,
+          "expired": 0,
+          "canceled": 0,
+          "missing": 0
+        }
+      },
+      "stop_reasons": {
+        "end_turn": 158,
+        "max_tokens": 2
+      },
+      "unmatched_records": 0,
+      "V1": {
+        "stated": {
+          "mae": {
+            "value": 0.0034377034328537965,
+            "ci": [
+              0.0018620906681138573,
+              0.006491663720170979
+            ],
+            "n": 60,
+            "target": 0.0
+          },
+          "mae_adj": {
+            "value": 0.0029821994250067256,
+            "ci": [
+              0.0022558272159847455,
+              0.0037611198922096
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_crude": {
+            "value": 0.0018008412910497026,
+            "ci": [
+              0.0014015746984630474,
+              0.002220110430199917
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "mae_marg": {
+            "value": 0.00553006958250496,
+            "ci": [
+              0.0011018513916500976,
+              0.013611592942345922
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "determinable_true": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 60,
+            "target": 1.0
+          },
+          "n_out_of_range": 0,
+          "split_slope": {
+            "value": 1.018042572004352,
+            "ci": [
+              1.0129788364205832,
+              1.0234243344469598
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_r2": {
+            "value": 0.9940776628786394,
+            "ci": [
+              0.9773350564306221,
+              0.9998995413723184
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "split_contexts_incomplete": 0,
+          "split_contexts_flat": 0,
+          "reversal_agree_adj": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_crude": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          },
+          "reversal_agree_both": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 12,
+            "target": 1.0
+          }
+        },
+        "blind": {
+          "determinable_false": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "mae_vs_mixture": {
+            "value": 0.0873369252614679,
+            "ci": [
+              0.068794457944229,
+              0.10821176864042965
+            ],
+            "n": 20,
+            "target": 0.0
+          },
+          "nearest_adj": {
+            "value": 0.7,
+            "ci": [
+              0.5,
+              0.9
+            ],
+            "n": 20
+          },
+          "nearest_crude": {
+            "value": 0.3,
+            "ci": [
+              0.1,
+              0.5
+            ],
+            "n": 20
+          },
+          "nearest_marg": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20
+          }
+        }
+      },
+      "V2": {
+        "stated": {
+          "mae_crossing": {
+            "value": 3.125000000127158e-06,
+            "ci": [
+              1.1271365785159303e-16,
+              9.37500000006402e-06
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 16,
+            "target": 1.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_rho=-1": {
+            "value": -1.0000000000000002,
+            "ci": [
+              -1.0000000000000033,
+              -0.9999999999999998
+            ],
+            "n": 4,
+            "target": -1.0
+          },
+          "slope_rho=-0.5": {
+            "value": -0.4999939551469914,
+            "ci": [
+              -0.5001787629603134,
+              -0.49985815602836975
+            ],
+            "n": 3,
+            "target": -0.5
+          },
+          "slope_rho=0": {
+            "value": -5.827792776540337e-16,
+            "ci": [
+              -2.6324197382932e-15,
+              1.2461687011098698e-15
+            ],
+            "n": 3,
+            "target": 0.0
+          },
+          "slope_rho=0.5": {
+            "value": 0.4999999999999997,
+            "ci": [
+              0.49999999999999956,
+              0.4999999999999999
+            ],
+            "n": 3,
+            "target": 0.5
+          },
+          "slope_rho=1": {
+            "value": 1.0,
+            "ci": [
+              0.9999999999999997,
+              1.0000000000000078
+            ],
+            "n": 3,
+            "target": 1.0
+          },
+          "rho_tracking_slope": {
+            "value": 0.9999999141942608,
+            "ci": [
+              0.9999923168998337,
+              1.0000088383558623
+            ],
+            "n": 16,
+            "target": 1.0
+          }
+        },
+        "unstated": {
+          "mae_crossing": {
+            "value": 6.250000000149365e-06,
+            "ci": [
+              7.71735106375182e-17,
+              1.8750000000185305e-05
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "determinable_true_crossing": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 16,
+            "target": 0.0
+          },
+          "mae_same_side": {
+            "value": 1.6653345369377348e-16,
+            "ci": [
+              0.0,
+              3.3306690738754696e-16
+            ],
+            "n": 4,
+            "target": 0.0
+          },
+          "determinable_true_same_side": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 4,
+            "target": 1.0
+          },
+          "slope_crossing": {
+            "value": 3.888843145136909e-06,
+            "ci": [
+              -2.459611010389393e-06,
+              2.7214434267397464e-05
+            ],
+            "n": 16,
+            "target": 0.0
+          }
+        }
+      },
+      "V3": {
+        "measured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 19,
+            "target": 1.0
+          },
+          "point_mae": {
+            "value": 0.0033246497600773013,
+            "ci": [
+              0.002023412032882211,
+              0.00491900153589696
+            ],
+            "n": 19,
+            "target": 0.0
+          },
+          "point_missing": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 19,
+            "target": 0.0
+          }
+        },
+        "unmeasured": {
+          "identifiable_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "bounds_acc": {
+            "value": 1.0,
+            "ci": [
+              1.0,
+              1.0
+            ],
+            "n": 20,
+            "target": 1.0
+          },
+          "point_given": {
+            "value": 0.0,
+            "ci": [
+              0.0,
+              0.0
+            ],
+            "n": 20,
+            "target": 0.0
+          }
+        }
+      }
+    }
+  }
+}

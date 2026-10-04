@@ -2,9 +2,9 @@
 #   python -m witnesses.llm_probe.run_batch --config configs/e6/probe.yaml --dry-run --pilot 20
 exp: e6
 seed: 6
-n_per_condition: 50        # contexts per condition; --pilot K overrides
+n_per_condition: 100       # contexts per condition (sized from the 20-per-condition pilot); --pilot K overrides
 out_dir: results/e6
-max_tokens: 16000
+max_tokens: 16000          # pilot: 1/640 answers (Sonnet) truncated at this limit; kept for non-streaming safety
 max_cost_usd: 30.0         # --submit refuses when the estimate exceeds this (--max-cost overrides)
 
 v1:                        # L2 Simpson pair (E1 in words)
@@ -42,23 +42,23 @@ models:
   claude-opus-5-5:
     thinking: {type: adaptive}
     effort: high
-    est_output_tokens: 2500
+    est_output_tokens: 500     # pilot actual mean x ~1.25
     price_per_mtok: [4.0, 20.0]      # list price, input / output
   claude-sonnet-5-5:
     thinking: {type: adaptive}
     effort: high
-    est_output_tokens: 2500
+    est_output_tokens: 800     # pilot actual mean x ~1.25
     price_per_mtok: [2.0, 10.0]
   claude-haiku-4-5:
     thinking: {type: enabled, budget_tokens: 4000}
     effort: null                     # Haiku 4.5 rejects output_config.effort
-    est_output_tokens: 1500
+    est_output_tokens: 2600     # pilot actual mean x ~1.25
     price_per_mtok: [1.0, 5.0]
   claude-fable-5-1:
     opt_in: true                     # only with --include-fable
     thinking: null                   # thinking is always on; the parameter is omitted
     effort: high
-    est_output_tokens: 2500
+    est_output_tokens: 550     # pilot actual mean x ~1.25
     price_per_mtok: [10.0, 50.0]
 
 batch_discount: 0.5        # Message Batches API: 50% of list price

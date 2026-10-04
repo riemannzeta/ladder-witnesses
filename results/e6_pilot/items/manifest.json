@@ -1,0 +1,62 @@
+{
+  "seed": 6,
+  "n_per_condition": 100,
+  "pilot": false,
+  "config": {
+    "v1": {
+      "alpha": 0.3,
+      "n_samples": 400,
+      "reversal_every": 2,
+      "min_abs_ate": 0.03,
+      "min_stratum_count": 20,
+      "all_orderings": false
+    },
+    "v2": {
+      "sigma": 0.5,
+      "rho_values": [
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "w_max": 2.0,
+      "w_min_abs": 0.1,
+      "x_min_abs": 0.1,
+      "x_max_abs": 2.0,
+      "same_side_every": 5
+    },
+    "v3": {
+      "alpha": 0.5,
+      "n_samples": 400,
+      "min_stratum_count": 20,
+      "bound_tol": 0.03
+    }
+  },
+  "files": {
+    "V1.jsonl": {
+      "sha256": "c78808a86a620f820a9ab51145206e5de347b93918c1429bae673fb4658d99a3",
+      "n_items": 400,
+      "n_by_condition": {
+        "stated": 300,
+        "blind": 100
+      }
+    },
+    "V2.jsonl": {
+      "sha256": "5b114c29c6e15828e63ef03ebd55fe5a763000642660f451fadb48f2ac309ac0",
+      "n_items": 200,
+      "n_by_condition": {
+        "stated": 100,
+        "unstated": 100
+      }
+    },
+    "V3.jsonl": {
+      "sha256": "7decdcd0eb4f5856c1ed0d8c6151a92a3bae7ebe543239ef3253ec58ed9a4dfb",
+      "n_items": 200,
+      "n_by_condition": {
+        "measured": 100,
+        "unmeasured": 100
+      }
+    }
+  }
+}
