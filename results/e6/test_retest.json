@@ -1,0 +1,30 @@
+{
+ "claude-opus-5-5": {
+  "n_items": 159,
+  "numeric_fields": 258,
+  "frac_within_0p01": 0.9922480620155039,
+  "max_abs_diff": 0.22799999999999998,
+  "boolean_agreement": 1.0
+ },
+ "claude-sonnet-5-5": {
+  "n_items": 158,
+  "numeric_fields": 258,
+  "frac_within_0p01": 0.9651162790697675,
+  "max_abs_diff": 0.7426000000000001,
+  "boolean_agreement": 1.0
+ },
+ "claude-haiku-4-5": {
+  "n_items": 160,
+  "numeric_fields": 260,
+  "frac_within_0p01": 0.7192307692307692,
+  "max_abs_diff": 0.6384000000000001,
+  "boolean_agreement": 0.85625
+ },
+ "claude-fable-5-1": {
+  "n_items": 160,
+  "numeric_fields": 260,
+  "frac_within_0p01": 0.9807692307692307,
+  "max_abs_diff": 0.748,
+  "boolean_agreement": 1.0
+ }
+}
