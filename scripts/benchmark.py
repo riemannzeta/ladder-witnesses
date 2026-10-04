@@ -25,18 +25,21 @@ DEFAULT = ["configs/e1/aware.yaml", "configs/e3/aware.yaml", "configs/e4/main.ya
            "configs/e5/restart.yaml", "configs/e5/cf_abducted.yaml"]
 
 
-def bench(cfg_path: str, steps: int, device) -> dict:
+def bench(cfg_path: str, steps: int, device, compile_: bool = False) -> dict:
     cfg = yaml.safe_load((ROOT / cfg_path).read_text())
     set_seed(0)
     task = get_task(cfg["task"], **cfg.get("task_args", {}))
     model = TinyGPT(task.vocab_size, task.max_len, {k: v.dim for k, v in task.heads.items()},
                     cont_dim=task.cont_dim, **cfg["model"]).to(device)
     opt = make_optimizer(model, {"lr": 3e-4, "weight_decay": 0.01})
+    if compile_:
+        model = torch.compile(model)
     bs = cfg.get("optim", {}).get("batch_size", 256)
     amp = device.type == "cuda"
     t_data = t_all = 0.0
-    for i in range(steps + 20):
-        if i == 20:
+    warm = 60 if compile_ else 20
+    for i in range(steps + warm):
+        if i == warm:
             if device.type == "cuda":
                 torch.cuda.synchronize()
             t0 = time.time()
@@ -67,6 +70,7 @@ def main() -> None:
     ap.add_argument("--steps", type=int, default=300)
     ap.add_argument("--configs", nargs="*", default=DEFAULT)
     ap.add_argument("--device", default="auto")
+    ap.add_argument("--compile", action="store_true")
     a = ap.parse_args()
     dev = get_device(a.device)
     rows = []
@@ -74,7 +78,7 @@ def main() -> None:
         if not (ROOT / c).exists():
             print(f"skip missing {c}")
             continue
-        r = bench(c, a.steps, dev)
+        r = bench(c, a.steps, dev, a.compile)
         rows.append(r)
         print(f"{c:34s} {r['params'] / 1e6:5.2f}M  {r['steps_per_s']:7.1f} it/s  "
               f"{r['tokens_per_s'] / 1e6:6.2f} Mtok/s  data {100 * r['data_frac']:4.1f}%", flush=True)

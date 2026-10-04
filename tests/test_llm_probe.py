@@ -466,6 +466,7 @@ class _FakeBatches:
 
 
 def test_submit_and_collect_paths_with_a_fake_client(tmp_path, monkeypatch):
+    pytest.importorskip("anthropic")
     batches = _FakeBatches()
     fake = SimpleNamespace(messages=SimpleNamespace(batches=batches))
     monkeypatch.setattr(run_batch, "make_client", lambda env_file: fake)

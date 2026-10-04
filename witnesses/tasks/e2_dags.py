@@ -275,17 +275,15 @@ class E2Dags(Task):
         dev = st["pa"].device
         pa = st["pa"] if pa_override is None else pa_override
         perm = st["perm"]
-        edges = torch.full((B, N_EDGE_SLOTS), NOEDGE, dtype=torch.long, device=dev)
-        cnt = torch.zeros(B, dtype=torch.long, device=dev)
-        for i in range(4):
-            for p in range(4):
-                has = (pa[:, i] >> p) & 1 == 1
-                tok = EDGE0 + 4 * perm[:, p] + perm[:, i]
-                idx = cnt.clamp_max(N_EDGE_SLOTS - 1)
-                edges[has, idx[has]] = tok[has]
-                cnt = cnt + has.long()
-        order = torch.argsort(torch.rand(B, N_EDGE_SLOTS, device=dev), 1)
-        edges = edges.gather(1, order)
+        # all 16 (parent, child) candidates, then push non-edges back with a random sort key
+        par = torch.arange(4, device=dev).repeat_interleave(4)  # p for each of 16 slots
+        chi = torch.arange(4, device=dev).repeat(4)  # i
+        has = ((pa[:, chi] >> par[None, :]) & 1) == 1  # [B, 16]
+        tok = EDGE0 + 4 * perm[:, par] + perm[:, chi]
+        tok = torch.where(has, tok, torch.full_like(tok, NOEDGE))
+        key = torch.rand(B, 16, device=dev) + (~has).float() * 2.0
+        edges = tok.gather(1, torch.argsort(key, 1))[:, :N_EDGE_SLOTS]  # <= 5 edges, then pads
+        edges = edges.gather(1, torch.argsort(torch.rand(B, N_EDGE_SLOTS, device=dev), 1))
         isc = q["is_cond"]
         qtok = torch.where(isc, QCOND, QDO)
         base = torch.where(isc, COND0, DO0)
@@ -306,34 +304,33 @@ class E2Dags(Task):
 
     def _row_tokens(self, st: dict, theta: torch.Tensor | None = None,
                     pa_override: torch.Tensor | None = None):
+        """CPT rows as tokens (presented node label, presented parent-config index) + values.
+
+        All 16 (node, row) candidates are built at once; unused rows are pushed behind the used
+        ones by a random sort key (so used rows appear in random order), and the first
+        N_ROW_SLOTS (= max used rows) are kept.
+        """
         B = st["pa"].shape[0]
         dev = st["pa"].device
         pa = st["pa"] if pa_override is None else pa_override
         th = (st["theta"] if theta is None else theta).float()
         perm = st["perm"]
-        toks = torch.full((B, N_ROW_SLOTS), ROWPAD, dtype=torch.long, device=dev)
-        vals = torch.zeros(B, N_ROW_SLOTS, device=dev)
-        cnt = torch.zeros(B, dtype=torch.long, device=dev)
-        rank_t = torch.as_tensor(RANK, device=dev)
-        for i in range(4):
-            npa = torch.as_tensor([bin(m).count("1") for m in range(16)], device=dev)[pa[:, i]]
-            # presented parent order: do the two parents (if any) swap order under perm?
-            r0 = rank_t[pa[:, i]]  # [B, 4]
-            par_lab = torch.where(r0 >= 0, perm, torch.full_like(perm, 99))
-            srt = torch.sort(par_lab, 1).values  # presented labels of parents ascending
-            # internal order of parents ascending is by internal index; presented swap iff the
-            # internal-first parent has the larger presented label
-            first_int = torch.where(r0 == 0, perm, torch.full_like(perm, -1)).max(1).values
-            swapped = (npa == 2) & (first_int != srt[:, 0])
-            for j in range(4):
-                use = j < (2 ** npa)
-                jp = torch.where(swapped, ((j & 1) << 1) | ((j >> 1) & 1), torch.full_like(npa, j))
-                idx = cnt.clamp_max(N_ROW_SLOTS - 1)
-                toks[use, idx[use]] = (ROW0 + 4 * perm[:, i] + jp)[use]
-                vals[use, idx[use]] = th[:, i, j][use]
-                cnt = cnt + use.long()
-        order = torch.argsort(torch.rand(B, N_ROW_SLOTS, device=dev) + (toks == ROWPAD).float(), 1)
-        return toks.gather(1, order), vals.gather(1, order)
+        T_ = _tt(dev)
+        npa = torch.as_tensor([bin(m).count("1") for m in range(16)], device=dev)[pa]  # [B, 4]
+        r = T_["RANK"][pa]  # [B, 4 node, 4 parent]
+        # presented label of the internal-first parent vs the smallest presented parent label
+        first_lab = torch.where(r == 0, perm[:, None, :], torch.full_like(r, -1)).max(-1).values
+        min_lab = torch.where(r >= 0, perm[:, None, :], torch.full_like(r, 99)).min(-1).values
+        swapped = (npa == 2) & (first_lab != min_lab)  # [B, 4]
+        j = torch.arange(4, device=dev)[None, None, :].expand(B, 4, 4)  # internal row index
+        jp = torch.where(swapped[:, :, None], ((j & 1) << 1) | ((j >> 1) & 1), j)
+        use = j < (2 ** npa)[:, :, None]  # [B, 4, 4]
+        tok = ROW0 + 4 * perm[:, :, None] + jp
+        tok = torch.where(use, tok, torch.full_like(tok, ROWPAD)).reshape(B, 16)
+        val = torch.where(use, th, torch.zeros_like(th)).reshape(B, 16)
+        key = torch.rand(B, 16, device=dev) + (~use.reshape(B, 16)).float() * 2.0
+        order = torch.argsort(key, 1)[:, :N_ROW_SLOTS]
+        return tok.gather(1, order), val.gather(1, order)
 
     # ================================================================ batches
     def _draw(self, B: int, device, topos: list[int], kind: str = "single"):
