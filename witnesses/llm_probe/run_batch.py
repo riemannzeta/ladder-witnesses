@@ -89,21 +89,27 @@ def write_jsonl(path: Path, rows) -> None:
 # ---------------------------------------------------------------- credentials / client
 
 
+def _env_file_value(env_file: str, name: str) -> str | None:
+    """Value of NAME=... in a dotenv-style file (quotes and trailing comments stripped)."""
+    val = None
+    for line in Path(env_file).read_text().splitlines():
+        s = line.strip()
+        if s.startswith("export "):
+            s = s[len("export "):].lstrip()
+        if s.startswith(name + "="):
+            v = s.split("=", 1)[1].strip()
+            if v[:1] in ("'", '"'):
+                v = v[1:].split(v[0], 1)[0]
+            else:
+                v = v.split(" #", 1)[0].strip()
+            val = v
+    return val
+
+
 def load_api_key(env_file: str | None) -> tuple[str, str]:
     """(key, description of its source). Never prints the key."""
     if env_file:
-        key = None
-        for line in Path(env_file).read_text().splitlines():
-            s = line.strip()
-            if s.startswith("export "):
-                s = s[len("export "):].lstrip()
-            if s.startswith("ANTHROPIC_API_KEY="):
-                v = s.split("=", 1)[1].strip()
-                if v[:1] in ("'", '"'):
-                    v = v[1:].split(v[0], 1)[0]
-                else:
-                    v = v.split(" #", 1)[0].strip()
-                key = v
+        key = _env_file_value(env_file, "ANTHROPIC_API_KEY")
         if not key:
             raise SystemExit(f"no ANTHROPIC_API_KEY= line in {env_file}")
         return key, f"--env-file {env_file}"
@@ -113,13 +119,20 @@ def load_api_key(env_file: str | None) -> tuple[str, str]:
     return key, "the ANTHROPIC_API_KEY environment variable"
 
 
-def make_client(env_file: str | None):
+def make_client(env_file: str | None, workspace_id: str | None = None):
     import anthropic  # imported here so --dry-run never loads the SDK
 
     key, source = load_api_key(env_file)
     print(f"using the API key from {source}")
+    # Identity-linked keys that are not scoped to one workspace must name the workspace on every
+    # request (anthropic-workspace-id); take it from --workspace-id, the env file, or the env.
+    ws = workspace_id or (env_file and _env_file_value(env_file, "ANTHROPIC_WORKSPACE_ID")) \
+        or os.environ.get("ANTHROPIC_WORKSPACE_ID")
+    headers = {"anthropic-workspace-id": ws} if ws else None
+    if ws:
+        print(f"using workspace {ws}")
     # An explicit api_key means the SDK consults no other credential source.
-    return anthropic.Anthropic(api_key=key)
+    return anthropic.Anthropic(api_key=key, **({"default_headers": headers} if headers else {}))
 
 
 # ---------------------------------------------------------------- submit / collect
@@ -256,6 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--submit", action="store_true")
     mode.add_argument("--collect", nargs="*", metavar="BATCH_ID")
     ap.add_argument("--env-file", metavar="PATH")
+    ap.add_argument("--workspace-id", help="anthropic-workspace-id for keys not scoped to a workspace")
     ap.add_argument("--max-cost", type=float, metavar="USD")
     ap.add_argument("--out-dir", help="default: config out_dir")
     ap.add_argument("--poll-interval", type=float, default=60.0)
@@ -273,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise SystemExit(f"no batch ids given and no {batches_path}")
             last = json.loads(batches_path.read_text())["submissions"][-1]
             ids = [b["batch_id"] for b in last["batches"].values()]
-        client = make_client(args.env_file)
+        client = make_client(args.env_file, args.workspace_id)
         collect(client, ids, out_dir, args.poll_interval, args.no_wait)
         return 0
 
@@ -307,7 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nREFUSED: estimated ${total:.2f} exceeds --max-cost ${max_cost:.2f}; "
               "nothing was sent.")
         return 2
-    client = make_client(args.env_file)
+    client = make_client(args.env_file, args.workspace_id)
     record = {"submitted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
               "seed": cfg["seed"], "n_per_condition": n, "pilot": args.pilot,
               "est_total_usd": round(total, 4), "max_cost_usd": max_cost, "batches": {}}

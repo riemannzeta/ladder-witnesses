@@ -469,7 +469,7 @@ def test_submit_and_collect_paths_with_a_fake_client(tmp_path, monkeypatch):
     pytest.importorskip("anthropic")
     batches = _FakeBatches()
     fake = SimpleNamespace(messages=SimpleNamespace(batches=batches))
-    monkeypatch.setattr(run_batch, "make_client", lambda env_file: fake)
+    monkeypatch.setattr(run_batch, "make_client", lambda env_file, workspace_id=None: fake)
     args = ["--config", str(CONFIG), "--pilot", "1", "--out-dir", str(tmp_path)]
     assert run_batch.main(args + ["--submit"]) == 0
     log = json.loads((tmp_path / "batches.json").read_text())
