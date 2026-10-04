@@ -98,16 +98,26 @@ def eval_cache_path(cfg: dict, task) -> Path:
 
 
 def get_eval_sets(cfg: dict, task) -> tuple[dict, str]:
+    """Build (once) or load the frozen eval sets; a file lock stops concurrent workers on the same
+    task configuration from building the same set twice."""
+    import fcntl
+    import os
+
     path = eval_cache_path(cfg, task)
-    if path.exists():
-        return torch.load(path, weights_only=False), path.name
     path.parent.mkdir(parents=True, exist_ok=True)
-    with torch.random.fork_rng(devices=[]):
-        sets = task.make_eval_sets(seed=cfg["eval"]["seed"], n_episodes=cfg["eval"]["n_episodes"])
-    tmp = path.with_suffix(".tmp")
-    torch.save(sets, tmp)
-    tmp.rename(path)
-    return sets, path.name
+    with open(path.with_suffix(".lock"), "w") as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        try:
+            if path.exists():
+                return torch.load(path, weights_only=False), path.name
+            with torch.random.fork_rng(devices=[]):
+                sets = task.make_eval_sets(seed=cfg["eval"]["seed"], n_episodes=cfg["eval"]["n_episodes"])
+            tmp = path.with_suffix(f".{os.getpid()}.tmp")
+            torch.save(sets, tmp)
+            tmp.rename(path)
+            return sets, path.name
+        finally:
+            fcntl.flock(lk, fcntl.LOCK_UN)
 
 
 def make_optimizer(model: torch.nn.Module, ocfg: dict) -> torch.optim.Optimizer:
