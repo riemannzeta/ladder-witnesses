@@ -1,0 +1,65 @@
+# E6: Claude verbal probe (PLAN.md, section E6). Items: witnesses/llm_probe/items.py.
+#   python -m witnesses.llm_probe.run_batch --config configs/e6/probe.yaml --dry-run --pilot 20
+exp: e6
+seed: 6
+n_per_condition: 50        # contexts per condition; --pilot K overrides
+out_dir: results/e6
+max_tokens: 16000
+max_cost_usd: 30.0         # --submit refuses when the estimate exceeds this (--max-cost overrides)
+
+v1:                        # L2 Simpson pair (E1 in words)
+  alpha: 0.3
+  n_samples: 400
+  reversal_every: 2        # contexts 0, 2, 4, ... are rejection-sampled Simpson reversals
+  min_abs_ate: 0.03        # reversal: adjusted and crude ATEs of opposite sign, both |ATE| > this
+  min_stratum_count: 20    # every (covariate, treatment) stratum has >= 20 units, so the adjusted
+                           # estimand exists and the posterior mean is essentially plug-in
+  all_orderings: false     # false: one adj, one crude, one marg ordering per context; true: all 6
+
+v2:                        # L3 residual twin (E3 in words)
+  sigma: 0.5
+  rho_values: [-1.0, -0.5, 0.0, 0.5, 1.0]
+  w_max: 2.0               # w ~ U[-2, 2], two decimals, |w| >= w_min_abs
+  w_min_abs: 0.1
+  x_min_abs: 0.1           # |x*|, |x'| ~ U[0.1, 2.0], two decimals
+  x_max_abs: 2.0
+  same_side_every: 5       # contexts 4, 9, 14, ... are same-side; the rest cross (sign x* != sign x')
+
+v3:                        # identifiability (E4 in words)
+  alpha: 0.5
+  n_samples: 400
+  min_stratum_count: 20    # n(z, x=1) >= 20 for both z
+  bound_tol: 0.03          # bounds count as correct when both ends are within this
+
+score:
+  n_boot: 2000
+  seed: 0
+  split_min_spread: 0.02   # as in E1's witness block
+
+# Per-model request settings (claude-api skill: Thinking & Effort). No fallbacks: an eval must
+# measure each model, and the Batches API rejects them.
+models:
+  claude-opus-5-5:
+    thinking: {type: adaptive}
+    effort: high
+    est_output_tokens: 2500
+    price_per_mtok: [4.0, 20.0]      # list price, input / output
+  claude-sonnet-5-5:
+    thinking: {type: adaptive}
+    effort: high
+    est_output_tokens: 2500
+    price_per_mtok: [2.0, 10.0]
+  claude-haiku-4-5:
+    thinking: {type: enabled, budget_tokens: 4000}
+    effort: null                     # Haiku 4.5 rejects output_config.effort
+    est_output_tokens: 1500
+    price_per_mtok: [1.0, 5.0]
+  claude-fable-5-1:
+    opt_in: true                     # only with --include-fable
+    thinking: null                   # thinking is always on; the parameter is omitted
+    effort: high
+    est_output_tokens: 2500
+    price_per_mtok: [10.0, 50.0]
+
+batch_discount: 0.5        # Message Batches API: 50% of list price
+chars_per_token: 3.5       # offline input-token heuristic for the dry-run estimate

@@ -1,0 +1,58 @@
+name: wave2
+workers: 2
+jobs:
+- config: configs/e2/samples_f0.yaml
+  seeds: &id001
+  - 0
+  - 1
+  - 2
+- config: configs/e2/samples_f1.yaml
+  seeds: *id001
+- config: configs/e2/samples_f2.yaml
+  seeds: *id001
+- config: configs/e2/samples_f3.yaml
+  seeds: *id001
+- config: configs/e2/samples_f4.yaml
+  seeds: *id001
+- config: configs/e2/samples_f0.yaml
+  seeds:
+  - 0
+  set:
+  - condition=samples_f0_d128L4
+  - model.d_model=128
+  - model.n_layers=4
+  - model.n_heads=4
+- config: configs/e2/samples_f0.yaml
+  seeds:
+  - 0
+  set:
+  - condition=samples_f0_d384L8
+  - model.d_model=384
+  - model.n_layers=8
+  - model.n_heads=12
+- config: configs/e2/samples_f1.yaml
+  seeds:
+  - 0
+  set:
+  - condition=samples_f1_d128L4
+  - model.d_model=128
+  - model.n_layers=4
+  - model.n_heads=4
+- config: configs/e2/samples_f1.yaml
+  seeds:
+  - 0
+  set:
+  - condition=samples_f1_d384L8
+  - model.d_model=384
+  - model.n_layers=8
+  - model.n_heads=12
+- config: configs/e2c/main.yaml
+  seeds: *id001
+- config: configs/e5/restart.yaml
+  seeds: *id001
+- config: configs/e5/clock.yaml
+  seeds: *id001
+- config: configs/e5/cf_abducted.yaml
+  seeds: *id001
+- config: configs/e5/cf_fresh.yaml
+  seeds: *id001

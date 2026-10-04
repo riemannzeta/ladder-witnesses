@@ -1,0 +1,147 @@
+name: wave1
+workers: 3
+jobs:
+- config: configs/e1/aware.yaml
+  seeds: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+- config: configs/e1/shuffled.yaml
+  seeds: *id001
+- config: configs/e3/aware.yaml
+  seeds: *id001
+- config: configs/e3/shuffled.yaml
+  seeds: *id001
+- config: configs/e3/l2trained.yaml
+  seeds: *id001
+- config: configs/e4/main.yaml
+  seeds: *id001
+- config: configs/e2/cpt_f0.yaml
+  seeds: &id002
+  - 0
+  - 1
+  - 2
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id002
+- config: configs/e2/cpt_f2.yaml
+  seeds: *id002
+- config: configs/e2/cpt_f3.yaml
+  seeds: *id002
+- config: configs/e2/cpt_f4.yaml
+  seeds: *id002
+- config: configs/e2/cpt_f0.yaml
+  seeds: &id003
+  - 0
+  - 1
+  set:
+  - condition=cpt_f0_d128L4
+  - model.d_model=128
+  - model.n_layers=4
+  - model.n_heads=4
+- config: configs/e2/cpt_f0.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f0_d128L6
+  - model.d_model=128
+  - model.n_layers=6
+  - model.n_heads=4
+- config: configs/e2/cpt_f0.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f0_d128L8
+  - model.d_model=128
+  - model.n_layers=8
+  - model.n_heads=4
+- config: configs/e2/cpt_f0.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f0_d256L4
+  - model.d_model=256
+  - model.n_layers=4
+  - model.n_heads=8
+- config: configs/e2/cpt_f0.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f0_d256L8
+  - model.d_model=256
+  - model.n_layers=8
+  - model.n_heads=8
+- config: configs/e2/cpt_f0.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f0_d384L4
+  - model.d_model=384
+  - model.n_layers=4
+  - model.n_heads=12
+- config: configs/e2/cpt_f0.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f0_d384L6
+  - model.d_model=384
+  - model.n_layers=6
+  - model.n_heads=12
+- config: configs/e2/cpt_f0.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f0_d384L8
+  - model.d_model=384
+  - model.n_layers=8
+  - model.n_heads=12
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d128L4
+  - model.d_model=128
+  - model.n_layers=4
+  - model.n_heads=4
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d128L6
+  - model.d_model=128
+  - model.n_layers=6
+  - model.n_heads=4
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d128L8
+  - model.d_model=128
+  - model.n_layers=8
+  - model.n_heads=4
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d256L4
+  - model.d_model=256
+  - model.n_layers=4
+  - model.n_heads=8
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d256L8
+  - model.d_model=256
+  - model.n_layers=8
+  - model.n_heads=8
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d384L4
+  - model.d_model=384
+  - model.n_layers=4
+  - model.n_heads=12
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d384L6
+  - model.d_model=384
+  - model.n_layers=6
+  - model.n_heads=12
+- config: configs/e2/cpt_f1.yaml
+  seeds: *id003
+  set:
+  - condition=cpt_f1_d384L8
+  - model.d_model=384
+  - model.n_layers=8
+  - model.n_heads=12

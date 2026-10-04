@@ -1,0 +1,8 @@
+exp: e2c
+condition: main
+task: e2c_regimes
+task_args: {n_per_regime: 64, n_eval_per_kind: 1000}
+model: {d_model: 256, n_layers: 6, n_heads: 8}
+smoke_model: {d_model: 64, n_layers: 2, n_heads: 4}
+optim: {lr: 3.0e-4, batch_size: 256}
+schedule: {base_steps: 60000, min_steps: 20000, eval_every: 2000}

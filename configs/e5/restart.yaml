@@ -1,0 +1,9 @@
+exp: e5a
+condition: restart
+task: e5a_recurrence
+task_args: {semantics: restart, p_interv: 0.5}
+model: {d_model: 192, n_layers: 6, n_heads: 6}
+smoke_model: {d_model: 64, n_layers: 2, n_heads: 4}
+optim: {lr: 3.0e-4, batch_size: 256}
+schedule: {base_steps: 50000, min_steps: 15000, eval_every: 2000}
+eval: {n_episodes: 10000}
