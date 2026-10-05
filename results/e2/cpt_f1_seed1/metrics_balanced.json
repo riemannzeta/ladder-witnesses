@@ -1,7 +1,7 @@
 {
  "n_per_type": 1000,
  "eval_seed": 2000003,
- "updated_utc": "2026-10-05T14:38:43+00:00",
+ "updated_utc": "2026-10-05T22:32:37+00:00",
  "final": {
   "kl_composite_train_strict_do": 0.00012212341847890625,
   "gc_composite_train_strict_do": 0.9997882469153235,
