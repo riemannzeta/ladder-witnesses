@@ -230,13 +230,32 @@ def analyze_e4() -> dict:
                      f"≤ {np.log(1.15):.3f} (ratio in 0.85–1.15)", verdict(worst, None, np.log(1.15))))
         cov = np.array([r["final"][f"{cell}_cov80"] for r in runs])
         cmin, cmax = seed_boot(cov[:, sel].min(1)), seed_boot(cov[:, sel].max(1))
-        rows.append((f"80% interval coverage range over k ≥ 16, {cell.upper()}",
+        rows.append((f"80% coverage over k ≥ 16, {cell.upper()} — as implemented (bin-edge rounding)",
                      f"{cmin[0]:.3f} – {cmax[0]:.3f}", "within 0.77–0.83",
                      "PASS" if cmin[0] >= 0.77 and cmax[0] <= 0.83 else "FAIL"))
+        ci = np.array([_interp_coverage(preds(r), cell) for r in runs])  # [seeds, len(ks)]
+        oc = _interp_coverage(preds(runs[0]), cell, oracle=True)
+        lo_i, hi_i = ci[:, sel].min(1).mean(), ci[:, sel].max(1).mean()
+        rows.append((f"80% coverage over k ≥ 16, {cell.upper()} — interpolated (oracle: "
+                     f"{oc[sel].min():.3f}–{oc[sel].max():.3f})", f"{lo_i:.3f} – {hi_i:.3f}", "within 0.77–0.83",
+                     "PASS" if lo_i >= 0.77 and hi_i <= 0.83 else "FAIL"))
         out["cells"][cell] = dict(sd_model=np.mean([r["final"][f"{cell}_sd_model"] for r in runs], 0).tolist(),
                                   sd_oracle=runs[0]["final"][f"{cell}_sd_oracle"], slope=sl)
     out["rows"] = rows
     return out
+
+
+def _interp_coverage(p: dict, cell: str, oracle: bool = False) -> np.ndarray:
+    """Coverage of the TRUE p1 by central 80% intervals with quantiles linearly interpolated within
+    the 64 bins (the bin-edge version in E4's evaluate() rounds outward and over-covers even for the
+    exact oracle)."""
+    h = p[f"{cell}_oracle_hist" if oracle else f"{cell}_model_hist"].astype(float)
+    p1 = p[f"{cell}_p1"]
+    edges = np.linspace(0, 1, h.shape[-1] + 1)
+    cdf = np.concatenate([np.zeros(h.shape[:-1] + (1,)), np.cumsum(h, -1)], -1)
+    lo = np.apply_along_axis(lambda c: np.interp(0.1, c, edges), -1, cdf)
+    hi = np.apply_along_axis(lambda c: np.interp(0.9, c, edges), -1, cdf)
+    return ((p1[:, None] >= lo) & (p1[:, None] <= hi)).mean(0)
 
 
 # ================================================================ E2 / E2c
@@ -283,6 +302,32 @@ def analyze_e2(mode: str) -> dict:
         est = seed_boot([r["final"].get(key) for r in flat])
         rows.append((label + " (pooled over folds)", fmt(est), f"≥ {thr}", verdict(est, thr)))
         out[key] = est
+    # balanced combined-query re-evaluation (scripts/reeval_e2.py), when available
+    bal = []
+    for rr in allf:
+        for r in rr:
+            bp = r["dir"] / "metrics_balanced.json"
+            if bp.exists():
+                bal.append(json.loads(bp.read_text())["final"])
+    if bal:
+        def pooled(key):
+            return seed_boot([b.get(key) for b in bal if b.get(key) is not None and np.isfinite(b.get(key))])
+        def count(key):
+            return int(sum(b.get(key, 0) for b in bal) / max(1, len(bal)))
+        for split, lab in (("train", "training topologies"), ("heldout", "held-out topologies")):
+            e = pooled(f"gc_composite_{split}_strict_do")
+            rows.append((f"[balanced] combined do(A,B), strict rules, {lab} (~{count(f'n_composite_{split}_strict_do')} items/run)",
+                         fmt(e), "≥ 0.8", verdict(e, 0.8)))
+            out[f"bal_gc_{split}_strict_do"] = e
+            e = pooled(f"gc_composite_{split}_strict_cond")
+            rows.append((f"[balanced] matched L1: conditioning on two variables, {lab}", fmt(e), "≥ 0.8", verdict(e, 0.8)))
+            out[f"bal_gc_{split}_strict_cond"] = e
+        for split in ("train", "heldout"):
+            for tag, lab in (("both_parents", "both pinned variables are parents of T"), ("other", "other structures")):
+                e = pooled(f"kl_composite_{split}_relaxed_do_{tag}")
+                rows.append((f"[exploratory] relaxed combined do(), {split}: {lab} — KL (bits)", fmt(e, 4), "(reported)", ""))
+                out[f"bal_kl_{split}_relaxed_do_{tag}"] = e
+        out["balanced_runs"] = len(bal)
     out["rows"] = rows
     return out
 

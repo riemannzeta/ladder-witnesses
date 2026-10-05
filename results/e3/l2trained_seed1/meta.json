@@ -1,0 +1,62 @@
+{
+  "config": {
+    "exp": "e3",
+    "condition": "l2trained",
+    "task": "e3_twin",
+    "task_args": {
+      "n_pairs": 32,
+      "sigma": 0.5,
+      "rho_holdout": 0.3,
+      "rho_mode": "aware",
+      "target_mode": "l2"
+    },
+    "model": {
+      "d_model": 128,
+      "n_layers": 4,
+      "n_heads": 4
+    },
+    "smoke_model": {
+      "d_model": 64,
+      "n_layers": 2,
+      "n_heads": 4
+    },
+    "optim": {
+      "lr": 0.0003,
+      "weight_decay": 0.01,
+      "batch_size": 512,
+      "warmup": 1000,
+      "grad_clip": 1.0
+    },
+    "schedule": {
+      "base_steps": 30000,
+      "cap_mult": 4,
+      "min_steps": 10000,
+      "eval_every": 2000,
+      "plateau_window": 0.25,
+      "plateau_rel": 0.01,
+      "cooldown_frac": 0.2,
+      "cooldown_min": 2000
+    },
+    "eval": {
+      "seed": 1000003,
+      "n_episodes": 10000
+    },
+    "seed": 1,
+    "device": "auto",
+    "smoke": false,
+    "config_path": "configs/e3/l2trained.yaml",
+    "results_dir": "/home/ubuntu/ladder-witnesses/results/e3/l2trained_seed1",
+    "ckpt_dir": "/home/ubuntu/ladder-witnesses/runs/e3/l2trained_seed1"
+  },
+  "git_commit": null,
+  "git_dirty": false,
+  "python": "3.12.3",
+  "torch": "2.14.1+cu130",
+  "cuda": "13.0",
+  "device": "cuda",
+  "gpu": "NVIDIA A10G",
+  "hostname": "ip-172-31-27-117",
+  "started_utc": "2026-10-04T08:20:44+00:00",
+  "n_params": 799106,
+  "eval_set": "e3_twin_52def7a8ba47.pt"
+}

@@ -98,23 +98,24 @@ def fig_e1() -> None:
     # learning curve vs samples
     f = aware[0]["final"]
     k = np.arange(len(f["kl_curve_l2"]))
-    curves = [(np.mean([r["final"]["kl_curve_l2"] for r in aware], 0), BLUE, "causal query (given ordering)"),
-              (np.mean([r["final"]["kl_curve_func"] for r in aware], 0), AQUA, "same formula, asked by name"),
-              (np.mean([r["final"]["kl_curve_blind"] for r in aware], 0), REF, "ordering-blind Bayes")]
+    curves = [(np.mean([r["final"]["kl_curve_l2"] for r in aware], 0), BLUE, "causal query, ordering given", 7),
+              (np.mean([r["final"]["kl_curve_func"] for r in aware], 0), AQUA, "same formula, asked by name", -7),
+              (np.mean([r["final"]["kl_curve_blind"] for r in aware], 0), REF, "ordering-blind Bayes", -7)]
     if shuf:
-        curves.append((np.mean([r["final"]["kl_curve_l2"] for r in shuf], 0), ORANGE, "scrambled-ordering model"))
+        curves.append((np.mean([r["final"]["kl_curve_l2"] for r in shuf], 0), ORANGE, "model, ordering scrambled", 7))
     ys = []
-    for y, c, t in curves:
+    for y, c, t, dy in curves:
         y = np.maximum(y, 1e-5)
         a2.plot(k[1:], y[1:], color=c, lw=1.6 if c != REF else 1.2, ls="-" if c != REF else "--")
-        label(a2, k[-1], y[-1], t, c if c != REF else MUTED)
+        label(a2, k[-1], y[-1], t, c if c != REF else MUTED, dy=dy)
         ys.append(y[1:])
     a2.set_yscale("log")
     a2.set_xlabel("samples seen, k")
     a2.set_ylabel("KL to exact answer (bits)")
     a2.set_title("Error vs. evidence", loc="left")
     range_frame(a2, k[1:], np.concatenate(ys))
-    a2.set_xlim(0, k[-1] * 1.6)
+    a2.set_xlim(0, k[-1] * 1.75)
+    a2.set_xticks([0, 32, 64, 96, 128])
     fig.tight_layout()
     save(fig, "e1_witness")
 
@@ -128,20 +129,22 @@ def fig_e3() -> None:
     ax.axvspan(-0.3, 0.3, color="#f2f1ed", zorder=0)
     ax.text(0, 1.08, "held out\nin training", ha="center", va="top", color=MUTED, fontsize=7.5)
     ax.plot([-1, 1], [-1, 1], color=REF, lw=1, zorder=1)
-    names = {"aware": (BLUE, "ρ given"), "shuffled": (ORANGE, "ρ scrambled"), "l2trained": (AQUA, "trained on interventions only")}
+    names = {"aware": (BLUE, "ρ given", 0), "shuffled": (ORANGE, "ρ scrambled", 8),
+             "l2trained": (AQUA, "trained on interventions only", -8)}
     allx, ally = [-1, 1], []
-    for c, (color, text) in names.items():
+    for c, (color, text, dy) in names.items():
         b = s["bins"].get(c)
         if not b:
             continue
         x, y, e = np.array(b["rho"]), np.array(b["slope_mean"]), np.array(b["slope_sd"])
         ax.errorbar(x, y, yerr=e, fmt="o", ms=4.5, color=color, ecolor=color, elinewidth=1, capsize=0, zorder=3)
-        label(ax, x[-1], y[-1], text, color, dx=7)
+        label(ax, x[-1], y[-1], text, color, dx=7, dy=dy)
         ally += list(y)
     ax.set_xlabel("cross-world correlation ρ (Layer-3 information only)")
     ax.set_ylabel("residual-transfer slope")
     ax.set_title("Counterfactuals track ρ; without it they collapse to the interventional answer", loc="left", fontsize=9.5)
-    ax.set_xlim(-1.08, 1.75)
+    ax.set_xlim(-1.08, 1.85)
+    ax.set_xticks([-1, -0.5, 0, 0.5, 1])
     range_frame(ax, allx, [min(-1, min(ally)), max(1, max(ally))])
     save(fig, "e3_rho")
 
@@ -167,7 +170,8 @@ def fig_e4() -> None:
         ax.set_xlabel("samples k")
         range_frame(ax, ks[sel], np.array(c["sd_model"])[sel])
     axs[0].set_ylabel("posterior sd of P(Y=1|do(X=1))")
-    label(axs[0], ks[sel][0], np.array(s["cells"]["obs_conf"]["sd_oracle"])[sel][0], "exact Bayes", MUTED, dy=8)
+    so = np.array(s["cells"]["obs_conf"]["sd_oracle"])[sel]
+    label(axs[0], ks[sel][3], so[3], "exact Bayes (dashed)", MUTED, dx=-6, dy=-10, ha="right")
     label(axs[0], ks[sel][-1], np.array(s["cells"]["obs_conf"]["sd_model"])[sel][-1], "transformer", BLUE, dy=-9, ha="right")
     fig.tight_layout()
     save(fig, "e4_identifiability")
@@ -188,25 +192,70 @@ def _dot_rows(ax, rows, x_ref=(0.5, 0.8)) -> None:
     ax.spines["left"].set_visible(False)
 
 
+def _e2_balanced_runs(pattern: str) -> list[dict]:
+    import re
+    out = []
+    for rd in sorted((RES / "e2").iterdir()):
+        m = re.match(pattern, rd.name)
+        if not m or not (rd / "metrics_balanced.json").exists() or not (rd / "metrics.json").exists():
+            continue
+        js = json.loads((rd / "metrics.json").read_text())
+        if js.get("status") != "done":
+            continue
+        b = json.loads((rd / "metrics_balanced.json").read_text())["final"]
+        out.append(dict(name=rd.name, m=m, final=js["final"], bal=b))
+    return out
+
+
 def fig_e2() -> None:
-    sfile = RES / "summary.json"
-    if not sfile.exists():
+    base = _e2_balanced_runs(r"cpt_f(\d)_seed(\d)$")
+    if not base:
         return
-    s = json.loads(sfile.read_text())
-    blocks = [(k, t) for k, t in (("e2_cpt", "E2-0: graph + CPTs"), ("e2_samples", "E2-full: graph + samples")) if k in s]
-    if not blocks:
-        return
-    fig, axs = plt.subplots(1, len(blocks), figsize=(4.4 * len(blocks) + 1.5, 3.4), squeeze=False)
-    for ax, (k, t) in zip(axs[0], blocks):
-        rows = []
-        for f, r in sorted(s[k]["folds"].items(), key=lambda kv: int(kv[0])):
-            rows += [(f"fold {f} · in-distribution", r["gc_in_dist_do"], MUTED),
-                     (f"fold {f} · held-out graphs", r["gc_heldout_do"], BLUE),
-                     (f"fold {f} · combined do(A,B)", r["gc_composite_heldout_do"], ORANGE)]
-        _dot_rows(ax, rows)
-        ax.set_xlim(min(0.0, min(r[1][0] for r in rows) - 0.05), 1.02)
-        ax.set_xlabel("gap closed (1 = exact Bayes, 0 = baseline)")
-        ax.set_title(t, loc="left")
+    tests = [("single do(), unseen graphs", lambda r: r["final"].get("gc_heldout_do"), BLUE),
+             ("single conditioning, unseen graphs", lambda r: r["final"].get("gc_heldout_cond"), AQUA),
+             ("two interventions combined", lambda r: np.nanmean([r["bal"].get("gc_composite_train_strict_do", np.nan),
+                                                                  r["bal"].get("gc_composite_heldout_strict_do", np.nan)]), BLUE),
+             ("two conditions combined", lambda r: np.nanmean([r["bal"].get("gc_composite_train_strict_cond", np.nan),
+                                                               r["bal"].get("gc_composite_heldout_strict_cond", np.nan)]), ORANGE)]
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(9, 3.3), gridspec_kw={"width_ratios": [1.15, 1]})
+    ys = np.arange(len(tests))[::-1]
+    for y, (lab, fn, color) in zip(ys, tests):
+        v = np.array([fn(r) for r in base], float)
+        v = v[np.isfinite(v)]
+        a1.plot(v, y + np.linspace(-0.12, 0.12, len(v)), "o", ms=3, color=color, alpha=0.45, mec="none")
+        a1.plot([v.mean()], [y], "|", ms=16, mew=2, color=color)
+        a1.text(-0.03, y, lab, transform=a1.get_yaxis_transform(), ha="right", va="center", color=INK2, fontsize=8.5)
+    a1.axvline(0.8, color=REF, lw=0.9, ls="--", zorder=0)
+    a1.text(0.81, ys[-1] - 0.42, "pass threshold", color=MUTED, fontsize=7.5, ha="left")
+    a1.set_yticks([])
+    a1.spines["left"].set_visible(False)
+    a1.set_xlim(0, 1.03)
+    a1.set_xlabel("gap closed (1 = exact answer)")
+    a1.set_title("Given the graph and CPTs (15 runs, 5 folds)", loc="left")
+    range_frame(a1, [0, 1], [])
+    # capacity sweep
+    sweep = _e2_balanced_runs(r"cpt_f([01])(?:_d(\d+)L(\d+))?_seed([01])$")
+    xs, ys2 = [], []
+    for r in sweep:
+        d = int(r["m"].group(2) or 256)
+        L = int(r["m"].group(3) or 6)
+        g = np.nanmean([r["bal"].get("gc_composite_train_strict_cond", np.nan),
+                        r["bal"].get("gc_composite_heldout_strict_cond", np.nan)])
+        xs.append(12 * L * d * d / 1e6)
+        ys2.append(g)
+    xs, ys2 = np.array(xs), np.array(ys2)
+    a2.plot(xs, ys2, "o", ms=4, color=ORANGE, alpha=0.7, mec="none")
+    ux = np.unique(np.round(xs, 1))
+    means = [ys2[np.isclose(np.round(xs, 1), u)].mean() for u in ux]
+    a2.plot(ux, means, "-", color=ORANGE, lw=1.2)
+    a2.axhline(0.8, color=REF, lw=0.9, ls="--", zorder=0)
+    a2.set_xscale("log")
+    a2.set_ylim(0, 1.0)
+    a2.set_xlabel("model parameters (millions)")
+    a2.set_ylabel("gap closed, two conditions")
+    a2.set_title("More capacity does not fix it", loc="left")
+    label(a2, ux[-1], means[-1], "two conditions combined", ORANGE, dy=-10, ha="right")
+    range_frame(a2, xs, ys2)
     fig.tight_layout()
     save(fig, "e2_gap_closed")
 

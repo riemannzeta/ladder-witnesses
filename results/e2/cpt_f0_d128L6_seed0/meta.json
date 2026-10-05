@@ -1,0 +1,62 @@
+{
+  "config": {
+    "exp": "e2",
+    "condition": "cpt_f0_d128L6",
+    "task": "e2_dags",
+    "task_args": {
+      "mode": "cpt",
+      "fold": 0,
+      "p_cond": 0.5,
+      "p_inert": 0.5,
+      "n_eval_per_split": 2000
+    },
+    "model": {
+      "d_model": 128,
+      "n_layers": 6,
+      "n_heads": 4
+    },
+    "smoke_model": {
+      "d_model": 64,
+      "n_layers": 2,
+      "n_heads": 4
+    },
+    "optim": {
+      "lr": 0.0003,
+      "weight_decay": 0.01,
+      "batch_size": 256,
+      "warmup": 1000,
+      "grad_clip": 1.0
+    },
+    "schedule": {
+      "base_steps": 40000,
+      "cap_mult": 4,
+      "min_steps": 15000,
+      "eval_every": 2000,
+      "plateau_window": 0.25,
+      "plateau_rel": 0.01,
+      "cooldown_frac": 0.2,
+      "cooldown_min": 2000
+    },
+    "eval": {
+      "seed": 1000003,
+      "n_episodes": 10000
+    },
+    "seed": 0,
+    "device": "auto",
+    "smoke": false,
+    "config_path": "configs/e2/cpt_f0.yaml",
+    "results_dir": "/home/ubuntu/ladder-witnesses/results/e2/cpt_f0_d128L6_seed0",
+    "ckpt_dir": "/home/ubuntu/ladder-witnesses/runs/e2/cpt_f0_d128L6_seed0"
+  },
+  "git_commit": null,
+  "git_dirty": false,
+  "python": "3.12.3",
+  "torch": "2.14.1+cu130",
+  "cuda": "13.0",
+  "device": "cuda",
+  "gpu": "NVIDIA A10G",
+  "hostname": "ip-172-31-27-117",
+  "started_utc": "2026-10-04T23:11:54+00:00",
+  "n_params": 1202433,
+  "eval_set": "e2_dags_ae3e81c6309a.pt"
+}

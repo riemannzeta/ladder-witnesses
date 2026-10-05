@@ -400,10 +400,16 @@ class E2Dags(Task):
         sets["swap"] = self._make_swap(n, cpu)
         return sets
 
-    def _make_split(self, n: int, cpu, topos, kind) -> dict:
+    def _make_split(self, n: int, cpu, topos, kind, max_rounds: int | None = None,
+                    require_disc: bool = True) -> dict:
+        """Rejection-sample n episodes. Composite queries must move the answer by > DISC when
+        either element is dropped and (require_disc) conditioning must differ from intervening.
+        With max_rounds, stop early and return what was found (possibly nothing)."""
         keep: list[dict] = []
         got = 0
-        while got < n:
+        rounds = 0
+        while got < n and (max_rounds is None or rounds < max_rounds):
+            rounds += 1
             st, q = self._draw(4 * n, cpu, topos, kind)
             ok = (q["B"] != -2).numpy()
             qn = {k: v.numpy() for k, v in q.items()}
@@ -424,13 +430,16 @@ class E2Dags(Task):
                     part = np.where(key == 1, a1["do"], a1["cond"])
                     ok &= np.abs(full - part) > DISC
                 # and conditioning must differ from intervening (an L1 strategy must fail)
-                ok &= np.abs(ans["do"] - ans["cond"]) > DISC
+                if require_disc:
+                    ok &= np.abs(ans["do"] - ans["cond"]) > DISC
             sel = np.nonzero(ok)[0]
             ep = {**{k: v[sel] for k, v in st.items()}, **{f"q_{k}": v[sel] for k, v in q.items()}}
             ep["ans_do"] = torch.as_tensor(ans["do"][sel])
             ep["ans_cond"] = torch.as_tensor(ans["cond"][sel])
             keep.append(ep)
             got += len(sel)
+        if got == 0:
+            return {}
         ep = {k: torch.cat([d[k] for d in keep])[:n] for k in keep[0]}
         return self._finalize(ep, cpu)
 

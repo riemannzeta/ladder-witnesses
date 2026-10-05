@@ -1,0 +1,60 @@
+{
+  "config": {
+    "exp": "e4",
+    "condition": "main",
+    "task": "e4_identify",
+    "task_args": {
+      "alpha": 0.5,
+      "n_samples": 256,
+      "mc": 4096
+    },
+    "model": {
+      "d_model": 128,
+      "n_layers": 4,
+      "n_heads": 4
+    },
+    "smoke_model": {
+      "d_model": 64,
+      "n_layers": 2,
+      "n_heads": 4
+    },
+    "optim": {
+      "lr": 0.0003,
+      "weight_decay": 0.01,
+      "batch_size": 256,
+      "warmup": 1000,
+      "grad_clip": 1.0
+    },
+    "schedule": {
+      "base_steps": 30000,
+      "cap_mult": 4,
+      "min_steps": 10000,
+      "eval_every": 2000,
+      "plateau_window": 0.25,
+      "plateau_rel": 0.01,
+      "cooldown_frac": 0.2,
+      "cooldown_min": 2000
+    },
+    "eval": {
+      "seed": 1000003,
+      "n_episodes": 8000
+    },
+    "seed": 0,
+    "device": "auto",
+    "smoke": false,
+    "config_path": "configs/e4/main.yaml",
+    "results_dir": "/home/ubuntu/ladder-witnesses/results/e4/main_seed0",
+    "ckpt_dir": "/home/ubuntu/ladder-witnesses/runs/e4/main_seed0"
+  },
+  "git_commit": null,
+  "git_dirty": false,
+  "python": "3.12.3",
+  "torch": "2.14.1+cu130",
+  "cuda": "13.0",
+  "device": "cuda",
+  "gpu": "NVIDIA A10G",
+  "hostname": "ip-172-31-27-117",
+  "started_utc": "2026-10-04T08:36:37+00:00",
+  "n_params": 836928,
+  "eval_set": "e4_identify_6e434a1f43d6.pt"
+}
