@@ -54,16 +54,20 @@ class E4Identify(Task):
     vocab_size = VOCAB
     headline = "kl_post"
 
-    def __init__(self, alpha: float = 0.5, n_samples: int = 256, mc: int = 4096):
+    def __init__(self, alpha: float = 0.5, n_samples: int = 256, mc: int = 4096, n_bins: int = N_BINS):
         self.alpha = alpha
         self.N = n_samples
         self.mc = mc
+        self.n_bins = n_bins
         self.max_len = 3 + n_samples
-        self.heads = {"post": HeadSpec(N_BINS, "soft_ce")}
-        self.edges = np.linspace(0.0, 1.0, N_BINS + 1)
+        self.heads = {"post": HeadSpec(n_bins, "soft_ce")}
+        self.edges = np.linspace(0.0, 1.0, n_bins + 1)
 
     def eval_signature(self) -> dict:
-        return {"alpha": self.alpha, "N": self.N, "mc": self.mc}
+        sig = {"alpha": self.alpha, "N": self.N, "mc": self.mc}
+        if self.n_bins != N_BINS:
+            sig["n_bins"] = self.n_bins
+        return sig
 
     # ------------------------------------------------------------------ generation
     def _episodes(self, B: int, device) -> dict:
@@ -83,8 +87,8 @@ class E4Identify(Task):
 
     def sample_batch(self, batch_size: int, device) -> dict:
         ep = self._episodes(batch_size, device)
-        tgt = torch.zeros(batch_size, 1, N_BINS, device=device)
-        b = (ep["p1"] * N_BINS).long().clamp(0, N_BINS - 1)
+        tgt = torch.zeros(batch_size, 1, self.n_bins, device=device)
+        b = (ep["p1"] * self.n_bins).long().clamp(0, self.n_bins - 1)
         tgt[torch.arange(batch_size, device=device), 0, b] = 1.0
         pos = torch.arange(self.max_len, device=device)
         return dict(tokens=self._tokens(ep), targets={"post": tgt},

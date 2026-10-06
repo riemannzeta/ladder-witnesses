@@ -1,0 +1,12 @@
+# POST-HOC diagnostic (PREDICTIONS.md, Addendum 1): main.yaml with a 256-bin posterior head instead
+# of 64 bins. Asks whether the OBS-CONF sd-ratio miss (model posterior 16-19% too wide at k = 256)
+# and the bin-edge coverage rounding come from output resolution. Same model, data and schedule.
+exp: e4
+condition: bins256
+task: e4_identify
+task_args: {alpha: 0.5, n_samples: 256, mc: 4096, n_bins: 256}
+model: {d_model: 128, n_layers: 4, n_heads: 4}
+smoke_model: {d_model: 64, n_layers: 2, n_heads: 4}
+optim: {lr: 3.0e-4, batch_size: 256}
+schedule: {base_steps: 30000, min_steps: 10000, eval_every: 2000}
+eval: {n_episodes: 8000}

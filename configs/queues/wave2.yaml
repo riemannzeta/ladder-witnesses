@@ -1,11 +1,23 @@
+# Wave 2. First the two POST-HOC arms approved at CP1.5 (short; PREDICTIONS.md Addendum 1),
+# then the pre-registered long queue: E2-full 5 folds x 3 seeds, the diagonal capacity sweep
+# (2 seeds, because the matched two-condition control failed in E2-0), E2c, E5.
 name: wave2
 workers: 2
 jobs:
+- config: configs/e2/cpt_comp_f0.yaml
+  seeds: [0]
+- config: configs/e2/cpt_comp_f1.yaml
+  seeds: [0]
+- config: configs/e2/cpt_comp_f2.yaml
+  seeds: [0]
+- config: configs/e2/cpt_comp_f3.yaml
+  seeds: [0]
+- config: configs/e2/cpt_comp_f4.yaml
+  seeds: [0]
+- config: configs/e4/bins256.yaml
+  seeds: [0, 1, 2, 3, 4]
 - config: configs/e2/samples_f0.yaml
-  seeds: &id001
-  - 0
-  - 1
-  - 2
+  seeds: &id001 [0, 1, 2]
 - config: configs/e2/samples_f1.yaml
   seeds: *id001
 - config: configs/e2/samples_f2.yaml
@@ -15,37 +27,17 @@ jobs:
 - config: configs/e2/samples_f4.yaml
   seeds: *id001
 - config: configs/e2/samples_f0.yaml
-  seeds:
-  - 0
-  set:
-  - condition=samples_f0_d128L4
-  - model.d_model=128
-  - model.n_layers=4
-  - model.n_heads=4
+  seeds: [0, 1]
+  set: [condition=samples_f0_d128L4, model.d_model=128, model.n_layers=4, model.n_heads=4]
 - config: configs/e2/samples_f0.yaml
-  seeds:
-  - 0
-  set:
-  - condition=samples_f0_d384L8
-  - model.d_model=384
-  - model.n_layers=8
-  - model.n_heads=12
+  seeds: [0, 1]
+  set: [condition=samples_f0_d384L8, model.d_model=384, model.n_layers=8, model.n_heads=12]
 - config: configs/e2/samples_f1.yaml
-  seeds:
-  - 0
-  set:
-  - condition=samples_f1_d128L4
-  - model.d_model=128
-  - model.n_layers=4
-  - model.n_heads=4
+  seeds: [0, 1]
+  set: [condition=samples_f1_d128L4, model.d_model=128, model.n_layers=4, model.n_heads=4]
 - config: configs/e2/samples_f1.yaml
-  seeds:
-  - 0
-  set:
-  - condition=samples_f1_d384L8
-  - model.d_model=384
-  - model.n_layers=8
-  - model.n_heads=12
+  seeds: [0, 1]
+  set: [condition=samples_f1_d384L8, model.d_model=384, model.n_layers=8, model.n_heads=12]
 - config: configs/e2c/main.yaml
   seeds: *id001
 - config: configs/e5/restart.yaml

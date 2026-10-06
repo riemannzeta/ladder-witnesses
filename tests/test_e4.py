@@ -68,3 +68,15 @@ def test_hid_tokens_identical_for_conf_and_med():
     ep["conf"][:] = False
     tok_m = t._tokens(ep)
     assert (tok_c[:, 3:] == tok_m[:, 3:]).all() and (tok_c[:, 2] != tok_m[:, 2]).all()
+
+
+def test_n_bins_parameter():
+    """The 256-bin diagnostic arm: targets, eval signature and oracle histograms follow n_bins."""
+    t64, t256 = E4Identify(n_samples=16, mc=512), E4Identify(n_samples=16, mc=512, n_bins=256)
+    assert t64.eval_signature() != t256.eval_signature()
+    b = t256.sample_batch(32, torch.device("cpu"))
+    assert b["targets"]["post"].shape == (32, 1, 256)
+    assert torch.allclose(b["targets"]["post"].sum(-1), torch.ones(32, 1))
+    sets = t256.make_eval_sets(0, 64)
+    h = sets["obs_conf"]["oracle_hist"]
+    assert h.shape[-1] == 256 and torch.allclose(h.sum(-1), torch.ones(h.shape[:-1]), atol=1e-4)

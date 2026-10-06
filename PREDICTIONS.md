@@ -147,3 +147,54 @@ Never say any of the following:
 - that the results "confirm Mossé–Ibeling–Icard" (theirs is a satisfiability-complexity result).
 
 Also nothing about do-calculus beyond the truncated factorization, about N beyond the training range, or about LLMs from the small-model results.
+
+---
+
+## Addendum 1 (2026-10-06): changes after wave 1, written before any wave-2 run
+
+Everything above this line was committed before any training (commit `3f434c8`). This addendum records every change made after seeing the wave-1 results (E1, E3, E4, E2-0). Every pre-registered metric is still reported exactly as defined above; nothing here replaces one.
+
+### A. Evaluation changes made after seeing wave-1 results (post hoc)
+1. **E2 combined-query sets held too few do() items.** The frozen combined split draws do() and conditioning queries 50/50, then applies the pre-registered acceptance rules (both elements move the answer by > 0.05, and conditioning differs from intervening by > 0.05). In 4-node graphs with in-degree ≤ 2, only 2 of the 25 topologies (T20, T24) admit any do() query that passes, so the frozen split holds 0–53 do() items per fold and none at all in held-out folds 1, 3 and 4.
+   - `scripts/reeval_e2.py` re-scores finished checkpoints on **balanced** sets that draw each query type to its own quota (up to 1,000) under the same rules (*strict*).
+   - It also scores an exploratory *relaxed* set that drops the do-vs-conditioning rule.
+   - The frozen-split numbers remain the pre-registered result.
+2. **Structural breakdown (exploratory).** Combined-set KL is split by whether both pinned variables are parents of the target.
+3. **E4 coverage, interpolated.** The pre-registered coverage reads interval ends off bin edges, which widens every interval by up to a bin on each side and over-covers even for the exact oracle.
+   - The as-implemented metric remains the pre-registered result and is reported as FAIL (0.82–0.87).
+   - The interpolated version (model 0.79–0.82; oracle 0.78–0.81) is reported as a labeled diagnostic.
+
+### B. Wave-2 decisions
+1. **The diagonal capacity sweep runs 2 seeds.** The rule above says 2 seeds "if any fold comes out inconclusive or negative", but that can't be checked before the sweep starts, because the sweep shares the queue with the E2-full folds. We take the larger option unconditionally, because in E2-0 the matched two-condition control failed and the seed-to-seed spread exceeded any capacity effect.
+2. Everything else in wave 2 runs as pre-registered: E2-full 5 folds × 3 seeds, E2c 3 seeds, E5 4 conditions × 3 seeds.
+
+### C. Post-hoc arm 1: E2-0 trained with two-effective-element queries (exploratory)
+- **Why.** In E2-0 every pre-registered interventional criterion passed (GC 1.000). The matched control with two conditioning variables failed: GC 0.37 [0.30, 0.44] on training topologies and 0.40 [0.34, 0.45] on held-out ones. On the relaxed do() sets, KL was 10–18× higher (0.07 vs. 0.004–0.007 bits) when both pinned variables are parents of the target.
+  - Training never contained a query in which both slots matter: the second slot was always empty or inert.
+  - The capacity sweep (0.8M–14M parameters) showed no trend.
+- **Question.** Is the weakness a gap in the training distribution, or something that more examples of the query type don't fix?
+- **Design.** Identical to `cpt_f<k>`, except that 25% of training queries are replaced by queries whose two elements are both structurally effective:
+  - **do-pairs:** each element has a directed path to the target that avoids the other;
+  - **conditioning pairs:** neither element is d-separated from the target given the other.
+  - Folds 0–4, seed 0 (5 runs), configs `configs/e2/cpt_comp_f<k>.yaml`, scored on the same frozen and balanced sets as the pre-registered runs. The eval splits are provably unchanged (`tests/test_e2.py::test_composite_training_mix_is_training_only`).
+- **What changes in meaning.** For this arm, a combined query is no longer a query type never seen in training. The held-out topologies are still never seen. The arm asks whether two-element computations transfer to unseen graphs once the query type itself has been trained.
+- **Predictions (written before the runs):**
+  - strict two-variable-conditioning GC ≥ 0.9 on training topologies **and** ≥ 0.9 on held-out topologies;
+  - relaxed do() KL with both pinned variables parents of the target ≤ 0.01 bits on held-out topologies;
+  - no regression on the pre-registered single-query criteria (GC ≥ 0.99).
+- **Reading:**
+
+  | Outcome | Reading |
+  |---|---|
+  | Training and held-out both ≥ 0.9 | The E2-0 weakness was a gap in the training distribution |
+  | Training ≥ 0.9, held-out ≤ 0.5 | Two-element computations were learned but do not transfer to unseen graphs |
+  | Both ≤ 0.5 | Training examples of the query type do not fix it at this size and budget |
+
+### D. Post-hoc arm 2: E4 with a 256-bin posterior head (diagnostic)
+- **Why.** E4's sd-ratio criterion failed only for OBS-CONF at k = 256: ratio 1.15–1.22 across seeds, against ≤ 1.07 at every k ≤ 128.
+  - Measured before this run: binning into 64 bins widens the *oracle's* own posterior sd by only 0.8% at k = 256 (Sheppard's correction).
+  - So discretization arithmetic can't account for a 15–22% excess. The open question is whether the head's resolution matters in some other way, for example through the difficulty of fitting a sharp peak with 64 logits.
+- **Design.** `configs/e4/bins256.yaml`: `main.yaml` with `n_bins: 256`, 5 seeds, everything else unchanged.
+- **Predictions:**
+  - **The OBS-CONF excess persists:** the mean sd ratio at k = 256 stays > 1.10. If it falls into [0.85, 1.15], the head's resolution was responsible after all.
+  - As-implemented 80% coverage over k ≥ 16 falls within [0.77, 0.83] in all four cells, because bin-edge rounding shrinks fourfold.

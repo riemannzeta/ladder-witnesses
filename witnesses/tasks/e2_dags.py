@@ -80,6 +80,26 @@ for _t in range(25):
                 if DSEP[_t, _T, _A, _B]:
                     INERT_COND[_t, _T, _A] |= 1 << _B
 
+# structurally valid two-element queries: PAIRS[t, T, kind, j] = (x, y) with x < y, both relevant to T
+# given the other (kind 0 = do(): each is an ancestor of T once the other is cut; kind 1 =
+# conditioning: neither is d-separated from T given the other). Used only by the post-hoc
+# two-element training arm (p_composite_train > 0).
+PAIRS = np.full((25, 4, 2, 3, 2), -1, dtype=np.int64)
+NPAIRS = np.zeros((25, 4, 2), dtype=np.int64)
+for _t in range(25):
+    for _T in range(4):
+        _others = [x for x in range(4) if x != _T]
+        for _x in _others:
+            for _y in _others:
+                if _x >= _y:
+                    continue
+                if (ANC_CUT[_t, _T, _x] >> _y & 1) and (ANC_CUT[_t, _T, _y] >> _x & 1):
+                    PAIRS[_t, _T, 0, NPAIRS[_t, _T, 0]] = (_x, _y)
+                    NPAIRS[_t, _T, 0] += 1
+                if not DSEP[_t, _T, _x, _y] and not DSEP[_t, _T, _y, _x]:
+                    PAIRS[_t, _T, 1, NPAIRS[_t, _T, 1]] = (_x, _y)
+                    NPAIRS[_t, _T, 1] += 1
+
 _TORCH_TABLES: dict = {}
 
 
@@ -92,6 +112,8 @@ def _tt(device) -> dict:
             "ASSIGN": torch.as_tensor(du.ASSIGN.copy(), device=device),
             "INERT_DO": torch.as_tensor(INERT_DO, device=device),
             "INERT_COND": torch.as_tensor(INERT_COND, device=device),
+            "PAIRS": torch.as_tensor(PAIRS, device=device),
+            "NPAIRS": torch.as_tensor(NPAIRS, device=device),
         }
     return _TORCH_TABLES[key]
 
@@ -143,7 +165,7 @@ class E2Dags(Task):
 
     def __init__(self, mode: str = "samples", fold: int = 0, n_samples: int = 128,
                  p_cond: float = 0.5, p_inert: float = 0.5, mc: int = 2048,
-                 n_eval_per_split: int | None = None):
+                 n_eval_per_split: int | None = None, p_composite_train: float = 0.0):
         assert mode in ("cpt", "samples")
         self.mode = mode
         self.fold = fold
@@ -152,6 +174,7 @@ class E2Dags(Task):
         self.p_inert = p_inert
         self.mc = mc
         self.n_eval_per_split = n_eval_per_split
+        self.p_composite_train = p_composite_train  # post-hoc arm: share of two-element training queries
         folds = du.load_folds()
         self.heldout_topos = sorted(folds[fold])
         self.train_topos = sorted(set(range(25)) - set(self.heldout_topos))
@@ -357,8 +380,24 @@ class E2Dags(Task):
         return dict(is_cond=is_cond, T=T, A=A, B=Bn,
                     va=torch.randint(0, 2, (B,), device=dev), vb=torch.randint(0, 2, (B,), device=dev))
 
+    def _mix_composite(self, st: dict, q: dict) -> dict:
+        """Post-hoc arm only: replace a p_composite_train share of training queries by queries with
+        two structurally effective elements (PAIRS). Training-time only, so every eval split is
+        built exactly as for the pre-registered runs."""
+        B = st["pa"].shape[0]
+        dev = st["pa"].device
+        T_ = _tt(dev)
+        kind = q["is_cond"].long()
+        npairs = T_["NPAIRS"][st["topo"], q["T"], kind]
+        j = (torch.rand(B, device=dev) * npairs.clamp_min(1)).long().clamp_max(2)
+        pair = T_["PAIRS"][st["topo"], q["T"], kind, j]  # [B, 2]
+        comp = (torch.rand(B, device=dev) < self.p_composite_train) & (npairs > 0)
+        return dict(q, A=torch.where(comp, pair[:, 0], q["A"]), B=torch.where(comp, pair[:, 1], q["B"]))
+
     def sample_batch(self, batch_size: int, device) -> dict:
         st, q = self._draw(batch_size, device, self.train_topos, "single")
+        if self.p_composite_train > 0:
+            q = self._mix_composite(st, q)
         pre = self._prefix(st, q)
         do_a, cond_a = answers_torch(st["pa"], st["theta"], q)
         target = torch.where(q["is_cond"], cond_a, do_a).float()

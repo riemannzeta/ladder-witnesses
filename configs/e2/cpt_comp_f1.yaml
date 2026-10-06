@@ -1,0 +1,12 @@
+# POST-HOC exploratory arm (PREDICTIONS.md, Addendum 1): E2-0 trained with a 25% share of queries
+# whose two slots are BOTH effective (do-pairs with directed paths to the target that avoid each
+# other; conditioning pairs not d-separated from the target given each other). Everything else,
+# including the frozen eval splits, is identical to cpt_f1.yaml.
+exp: e2
+condition: cpt_f1_comp25
+task: e2_dags
+task_args: {mode: cpt, fold: 1, p_cond: 0.5, p_inert: 0.5, n_eval_per_split: 2000, p_composite_train: 0.25}
+model: {d_model: 256, n_layers: 6, n_heads: 8}
+smoke_model: {d_model: 64, n_layers: 2, n_heads: 4}
+optim: {lr: 3.0e-4, batch_size: 256}
+schedule: {base_steps: 40000, min_steps: 15000, eval_every: 2000}

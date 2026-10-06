@@ -413,7 +413,8 @@ def test_cost_estimate_arithmetic():
     est = run_batch.estimate_cost(reqs, "claude-opus-5-5", CFG)
     in_tok = 10 * (35 + 315 + len("{}")) / 3.5
     assert math.isclose(est["input_tokens"], in_tok)
-    assert math.isclose(est["cost_usd"], (in_tok * 4 + 10 * 2500 * 20) / 1e6 * 0.5)
+    out_tok = CFG["models"]["claude-opus-5-5"]["est_output_tokens"]  # pilot-calibrated, in the config
+    assert math.isclose(est["cost_usd"], (in_tok * 4 + 10 * out_tok * 20) / 1e6 * 0.5)
 
 
 def test_env_file_key_parsing_only_reads_the_key_line(tmp_path, monkeypatch, capsys):

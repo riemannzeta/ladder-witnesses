@@ -122,3 +122,65 @@ def test_composite_both_elements_relevant():
         isc = q["is_cond"]
         diff = torch.where(isc, (full[1] - part[1]).abs(), (full[0] - part[0]).abs())
         assert (diff > 0.05).all()
+
+
+def test_pair_table_both_elements_effective():
+    """Every PAIRS entry (post-hoc two-element training arm) moves the answer when either element
+    is dropped, for generic CPTs; and every structurally valid pair is listed."""
+    from witnesses.tasks.e2_dags import ANC_CUT, DSEP, NPAIRS, PAIRS
+    t = E2Dags(mode="cpt", fold=0)
+    torch.manual_seed(11)
+    for topo in range(25):
+        st = t._structure(torch.full((64,), topo), CPU)
+        for T in range(4):
+            for kind in (0, 1):
+                listed = {tuple(PAIRS[topo, T, kind, j]) for j in range(NPAIRS[topo, T, kind])}
+                others = [x for x in range(4) if x != T]
+                for x in others:
+                    for y in others:
+                        if x >= y:
+                            continue
+                        if kind == 0:
+                            valid = bool(ANC_CUT[topo, T, x] >> y & 1) and bool(ANC_CUT[topo, T, y] >> x & 1)
+                        else:
+                            valid = not DSEP[topo, T, x, y] and not DSEP[topo, T, y, x]
+                        assert valid == ((x, y) in listed)
+                for x, y in listed:
+                    q = dict(is_cond=torch.full((64,), bool(kind)), T=torch.full((64,), T),
+                             A=torch.full((64,), x), B=torch.full((64,), y),
+                             va=torch.randint(0, 2, (64,)), vb=torch.randint(0, 2, (64,)))
+                    full = answers_torch(st["pa"], st["theta"].double(), q)[kind]
+                    for keep in ("A", "B"):
+                        q1 = dict(q, B=torch.full((64,), -1))
+                        if keep == "B":
+                            q1["A"], q1["va"] = q["B"], q["vb"]
+                        part = answers_torch(st["pa"], st["theta"].double(), q1)[kind]
+                        assert (full - part).abs().max() > 0.05, (topo, T, kind, x, y, keep)
+
+
+def test_composite_training_mix_is_training_only():
+    """p_composite_train changes training batches (about that share of queries gets two effective
+    elements) but not the frozen eval splits."""
+    base = E2Dags(mode="cpt", fold=1, n_eval_per_split=64)
+    arm = E2Dags(mode="cpt", fold=1, n_eval_per_split=64, p_composite_train=0.25)
+    torch.manual_seed(5)
+    st, q = arm._draw(8000, CPU, arm.train_topos, "single")
+    q2 = arm._mix_composite(st, q)
+    changed = (q2["A"] != q["A"]) | (q2["B"] != q["B"])
+    assert 0.12 < changed.float().mean() < 0.25
+    two = q2["B"] >= 0
+    d2, c2 = answers_torch(st["pa"], st["theta"].double(), q2)
+    q1 = dict(q2, B=torch.full_like(q2["B"], -1))
+    d1, c1 = answers_torch(st["pa"], st["theta"].double(), q1)
+    moved = torch.where(q2["is_cond"], (c2 - c1).abs(), (d2 - d1).abs()) > 1e-6
+    assert (moved & changed).float().sum() > 0.9 * changed.float().sum()
+    assert two[changed].all()
+    for kind in ("single", "composite"):
+        torch.manual_seed(9)
+        a = base._make_split(64, CPU, base.heldout_topos, kind)
+        torch.manual_seed(9)
+        b = arm._make_split(64, CPU, arm.heldout_topos, kind)
+        for k in a:
+            if isinstance(a[k], torch.Tensor):
+                assert torch.equal(a[k], b[k]), k
+    assert base.eval_signature() == arm.eval_signature()
