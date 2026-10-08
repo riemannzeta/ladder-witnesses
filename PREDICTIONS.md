@@ -217,3 +217,20 @@ Everything above this line was committed before any training (commit `3f434c8`).
    - **The prediction "excess persists (> 1.10)" held, but the head's resolution is involved in the opposite direction from the one I anticipated:** more bins means more tail floor.
    - **The coverage prediction failed in 2 of 4 cells** (as implemented, OBS-CONF reached 0.840 and OBS-MED 0.838).
    - The pre-registered E4 sd-ratio result stays FAIL.
+
+---
+
+## Addendum 3 (2026-10-08): post-hoc arm 3, E2-full with two-effective-element training (exploratory)
+
+- **Why.** E2-full (11/15 runs done) passes every single-query criterion, but fails combined queries in the same way E2-0 did.
+  - Combined-conditioning KL is 0.22–0.33 bits, against 0.0003–0.006 for single queries.
+  - The slope of (model − L2) on (L1 − L2) is 0.30–0.45.
+  - Arm 1 (Addendum 1 C) showed that in E2-0 this was a gap in the training distribution.
+- **Design.** `samples_f<k>` with `p_composite_train: 0.25` (same PAIRS rule as arm 1). Folds 0–4, seed 0 (5 runs), configs `configs/e2/samples_comp_f<k>.yaml`, queue `wave2b`, run after wave 2.
+  - Scored on the same frozen sets as the pre-registered E2-full runs, after the Addendum 2 repair.
+  - Scored also on balanced sets built with the fixed oracles.
+- **Predictions (written before the runs), on the frozen combined sets:**
+  - combined conditioning: slope ≥ 0.9 and KL ≤ 0.02 bits, on training and on held-out topologies;
+  - combined do(): GC ≥ 0.8 wherever the split has do() items;
+  - no regression on the single-query criteria (in-distribution do() GC ≥ 0.85, held-out ≥ 0.8).
+- **Reading:** as in the table under Addendum 1 C. Additionally, if E2-0 recovers but E2-full does not, the obstacle is the combination of estimating from data and composing two elements, not composition alone.

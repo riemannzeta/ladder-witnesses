@@ -1,0 +1,10 @@
+# Follow-on to wave2 (approved 2026-10-08; PREDICTIONS.md Addendum 3): the E2-full two-element
+# training arm. Started by scripts/chain_queue.sh once wave2 has drained.
+name: wave2b
+workers: 2
+jobs:
+- {config: configs/e2/samples_comp_f0.yaml, seeds: [0]}
+- {config: configs/e2/samples_comp_f1.yaml, seeds: [0]}
+- {config: configs/e2/samples_comp_f2.yaml, seeds: [0]}
+- {config: configs/e2/samples_comp_f3.yaml, seeds: [0]}
+- {config: configs/e2/samples_comp_f4.yaml, seeds: [0]}
