@@ -198,3 +198,22 @@ Everything above this line was committed before any training (commit `3f434c8`).
 - **Predictions:**
   - **The OBS-CONF excess persists:** the mean sd ratio at k = 256 stays > 1.10. If it falls into [0.85, 1.15], the head's resolution was responsible after all.
   - As-implemented 80% coverage over k ≥ 16 falls within [0.77, 0.83] in all four cells, because bin-edge rounding shrinks fourfold.
+
+---
+
+## Addendum 2 (2026-10-08): oracle bug fix and diagnostics, written mid-wave-2 (21/48 runs done)
+
+1. **Bug fix in the E2-full oracles: no change to any definition.** The Monte Carlo L1 oracle and the conditional branch of the graph-blind baseline divide by the probability of the conditioning event, computed for each posterior draw.
+   - Beta(¼, ¼) rows for unseen parent configurations occasionally underflow to exactly 0 or 1 in float64, which makes that probability exactly 0 and the draw 0/0.
+   - In the frozen sets this produced NaN for 1 of 1,000 combined-conditioning items in folds 2 and 3 (and a NaN baseline in fold 2), so those means were NaN.
+   - Fix: drop such draws, a probability-zero event affecting at most a few of the 2,048 draws (`tests/test_e2.py::test_conditional_oracle_survives_beta_underflow`).
+   - After wave 2, every E2-full run is re-scored on the same frozen items, with only the NaN entries recomputed. The eval-set files are not touched while the queue is running.
+2. **E4 256-bin diagnostic (Addendum 1 D), recorded as measured.**
+   - **The excess got larger, not smaller:** OBS-CONF sd ratio at k = 256 was 1.45–1.76 against 1.15–1.22 with 64 bins. In both arms it shrinks monotonically with training steps.
+   - **Post-hoc analysis:**
+     - the model's posterior mean is as accurate as the oracle's (RMSE ratio 1.00–1.02);
+     - its central 80% width and IQR match the oracle's (ratios 0.99–1.06);
+     - the sd excess comes from a diffuse far tail: 0.1–0.2% of mass beyond 5 oracle sd with 64 bins, and 0.5–0.7% with 256 bins.
+   - **The prediction "excess persists (> 1.10)" held, but the head's resolution is involved in the opposite direction from the one I anticipated:** more bins means more tail floor.
+   - **The coverage prediction failed in 2 of 4 cells** (as implemented, OBS-CONF reached 0.840 and OBS-MED 0.838).
+   - The pre-registered E4 sd-ratio result stays FAIL.

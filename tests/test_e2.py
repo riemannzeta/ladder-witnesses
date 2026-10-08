@@ -184,3 +184,22 @@ def test_composite_training_mix_is_training_only():
             if isinstance(a[k], torch.Tensor):
                 assert torch.equal(a[k], b[k]), k
     assert base.eval_signature() == arm.eval_signature()
+
+
+def test_conditional_oracle_survives_beta_underflow():
+    """Draws in which a Beta(1/4, 1/4) row underflows to exactly 0 or 1 make the conditioning event
+    impossible (0/0); the MC oracle must drop them rather than return NaN."""
+    pa = tuple(int(x) for x in REP[17])
+    rng = np.random.default_rng(0)
+    draws = rng.beta(0.25, 0.25, size=(256, 4, 4))
+    draws[:8] = np.where(draws[:8] > 0.5, 1.0, 0.0)  # force exact 0/1 rows in some draws
+    for T in range(4):
+        for A in range(4):
+            for Bn in range(4):
+                if len({T, A, Bn}) < 3:
+                    continue
+                for va in (0, 1):
+                    q = dict(A=np.array([A]), B=np.array([Bn]), va=np.array([va]), vb=np.array([1 - va]),
+                             T=np.array([T]), is_cond=np.array([True]))
+                    v = E2Dags._cond_mc(pa, draws, q)
+                    assert np.isfinite(v) and 0 <= v <= 1

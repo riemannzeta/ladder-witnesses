@@ -8,7 +8,7 @@ This script draws each query type to its own quota under exactly the same rules,
 every finished checkpoint on it. No retraining; the frozen splits are left untouched and still
 reported.
 
-    python scripts/reeval_e2.py --mode cpt --n-per-type 1000 [--folds 0 1 2 3 4] [--device auto]
+    python scripts/reeval_e2.py --mode cpt --n-per-type 1000 [--folds 0 1 2 3 4] [--device auto] [--only comp25]
 
 Writes results/e2/<cond>_seed<k>/metrics_balanced.json (+ balanced_preds.npz).
 """
@@ -86,11 +86,12 @@ def main() -> None:
     ap.add_argument("--n-per-type", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=2_000_003)
     ap.add_argument("--device", default="auto")
+    ap.add_argument("--only", default=None, help="re-score only checkpoints whose run name contains this")
     a = ap.parse_args()
     dev = get_device(a.device)
     for fold in a.folds:
         ckpts = sorted((ROOT / "runs" / "e2").glob(f"{a.mode}_f{fold}*_seed*/model.pt"))
-        ckpts = [c for c in ckpts if "smoke" not in str(c)]
+        ckpts = [c for c in ckpts if "smoke" not in str(c) and (a.only is None or a.only in c.parent.name)]
         if not ckpts:
             print(f"fold {fold}: no finished checkpoints yet")
             continue

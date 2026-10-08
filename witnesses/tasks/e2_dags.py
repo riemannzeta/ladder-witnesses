@@ -595,7 +595,12 @@ class E2Dags(Task):
         if Bn >= 0:
             sel &= du.ASSIGN[:, Bn] == vb
         num = jt[:, sel & (du.ASSIGN[:, T] == 1)].sum(1)
-        return float((num / jt[:, sel].sum(1)).mean())
+        den = jt[:, sel].sum(1)
+        # Beta(1/4, 1/4) rows of unseen parent configurations occasionally draw exactly 0 or 1 in
+        # float64, making the conditioning event's probability exactly 0 (0/0). Those draws are
+        # underflow artifacts of a probability-zero event and are dropped (<= a few of mc draws).
+        ok = den > 0
+        return float((num[ok] / den[ok]).mean())
 
     # ---------------------------------------------------------------- graph-blind model averaging
     _BMA_CACHE: dict = {}
@@ -651,8 +656,9 @@ class E2Dags(Task):
         for d in np.unique(idx):
             m = idx == d
             jt = du.joint_table(dags[d], draws[m])
-            out[m] = jt[:, sel & (du.ASSIGN[:, T] == 1)].sum(1) / jt[:, sel].sum(1)
-        return float(out.mean())
+            den = jt[:, sel].sum(1)  # exactly 0 only through Beta underflow; see _cond_mc
+            out[m] = np.where(den > 0, jt[:, sel & (du.ASSIGN[:, T] == 1)].sum(1) / np.where(den > 0, den, 1.0), np.nan)
+        return float(np.nanmean(out))
 
     # ================================================================ evaluation
     def _model_answers(self, model, ep: dict, device) -> np.ndarray:
