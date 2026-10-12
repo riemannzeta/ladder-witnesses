@@ -1,0 +1,61 @@
+{
+  "config": {
+    "exp": "e5b",
+    "condition": "cf_abducted",
+    "task": "e5b_recurrence",
+    "task_args": {
+      "cf_labels": "abducted",
+      "eps": 0.2,
+      "held_out_frac": 0.2,
+      "held_out_seed": 12345
+    },
+    "model": {
+      "d_model": 192,
+      "n_layers": 6,
+      "n_heads": 6
+    },
+    "smoke_model": {
+      "d_model": 64,
+      "n_layers": 2,
+      "n_heads": 4
+    },
+    "optim": {
+      "lr": 0.0003,
+      "weight_decay": 0.01,
+      "batch_size": 256,
+      "warmup": 1000,
+      "grad_clip": 1.0
+    },
+    "schedule": {
+      "base_steps": 50000,
+      "cap_mult": 4,
+      "min_steps": 15000,
+      "eval_every": 2000,
+      "plateau_window": 0.25,
+      "plateau_rel": 0.01,
+      "cooldown_frac": 0.2,
+      "cooldown_min": 2000
+    },
+    "eval": {
+      "seed": 1000003,
+      "n_episodes": 10000
+    },
+    "seed": 1,
+    "device": "auto",
+    "smoke": false,
+    "config_path": "configs/e5/cf_abducted.yaml",
+    "results_dir": "/home/ubuntu/ladder-witnesses/results/e5b/cf_abducted_seed1",
+    "ckpt_dir": "/home/ubuntu/ladder-witnesses/runs/e5b/cf_abducted_seed1"
+  },
+  "git_commit": null,
+  "git_dirty": false,
+  "python": "3.12.3",
+  "torch": "2.14.1+cu130",
+  "cuda": "13.0",
+  "device": "cuda",
+  "gpu": "NVIDIA A10G",
+  "hostname": "ip-172-31-27-117",
+  "started_utc": "2026-10-11T04:28:07+00:00",
+  "n_params": 2690146,
+  "eval_set": "e5b_recurrence_bd1b30a15e95.pt"
+}

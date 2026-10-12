@@ -1,0 +1,59 @@
+{
+  "config": {
+    "exp": "e5a",
+    "condition": "restart",
+    "task": "e5a_recurrence",
+    "task_args": {
+      "semantics": "restart",
+      "p_interv": 0.5
+    },
+    "model": {
+      "d_model": 192,
+      "n_layers": 6,
+      "n_heads": 6
+    },
+    "smoke_model": {
+      "d_model": 64,
+      "n_layers": 2,
+      "n_heads": 4
+    },
+    "optim": {
+      "lr": 0.0003,
+      "weight_decay": 0.01,
+      "batch_size": 256,
+      "warmup": 1000,
+      "grad_clip": 1.0
+    },
+    "schedule": {
+      "base_steps": 50000,
+      "cap_mult": 4,
+      "min_steps": 15000,
+      "eval_every": 2000,
+      "plateau_window": 0.25,
+      "plateau_rel": 0.01,
+      "cooldown_frac": 0.2,
+      "cooldown_min": 2000
+    },
+    "eval": {
+      "seed": 1000003,
+      "n_episodes": 10000
+    },
+    "seed": 0,
+    "device": "auto",
+    "smoke": false,
+    "config_path": "configs/e5/restart.yaml",
+    "results_dir": "/home/ubuntu/ladder-witnesses/results/e5a/restart_seed0",
+    "ckpt_dir": "/home/ubuntu/ladder-witnesses/runs/e5a/restart_seed0"
+  },
+  "git_commit": null,
+  "git_dirty": false,
+  "python": "3.12.3",
+  "torch": "2.14.1+cu130",
+  "cuda": "13.0",
+  "device": "cuda",
+  "gpu": "NVIDIA A10G",
+  "hostname": "ip-172-31-27-117",
+  "started_utc": "2026-10-10T20:03:03+00:00",
+  "n_params": 2682449,
+  "eval_set": "e5a_recurrence_f962765234e6.pt"
+}

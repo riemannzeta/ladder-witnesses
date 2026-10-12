@@ -262,3 +262,5 @@ Everything above this line was committed before any training (commit `3f434c8`).
   - No further re-runs of this arm.
 - **Expectation (not a criterion).** Folds 0 and 2 reach KL ≤ 0.01 bits and slope ≥ 0.95 on combined conditioning, on both topology sets. Fold 1's held-out topologies are the least certain (slope 0.81 at 36k).
   - Combined do() verdicts stay weak in every fold: the frozen sets hold few such items, and the slope R² is below 0.35 in folds 0–2 at 36k.
+
+*Correction to Addendum 2, item 2 (2026-10-12, found while writing `analyze.py`):* the coverage count there averaged each k over seeds before taking the max over k. The main E4 analysis instead takes each seed's max over k, then averages. Under that aggregation, HID-MED's upper end is 0.8301, so the 256-bin coverage prediction failed in **3** of 4 cells, not 2. HID-MED misses by 0.0001, which is well inside sampling noise (2,000 episodes per k). `REPORT.md` uses the main analysis's aggregation.

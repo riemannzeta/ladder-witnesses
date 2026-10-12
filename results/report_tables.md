@@ -36,15 +36,69 @@ Runs: {'aware': '5 runs (2 converged, 3 hit the cap)', 'shuffled': '5 runs (5 co
 | GC, combined interventions (training topologies) (pooled over folds) | 1.000 [1.000, 1.000] | ≥ 0.8 | PASS |
 | GC, combined interventions (held-out topologies) (pooled over folds) | 1.000 [1.000, 1.000] | ≥ 0.8 | PASS |
 | slope (model−L1) on (L2−L1), held-out (pooled over folds) | 1.000 [1.000, 1.000] | ≥ 0.8 | PASS |
+| slope (model−L1) on (L2−L1), combined, held-out (pooled over folds) | 0.999 [0.998, 1.000] | ≥ 0.8 | PASS |
+| GC, combined, matched L1 (two-variable conditioning), training topologies (pooled over folds) | 0.378 [0.320, 0.441] | ≥ 0.8 | FAIL |
+| GC, combined, matched L1 (two-variable conditioning), held-out topologies (pooled over folds) | 0.398 [0.334, 0.453] | ≥ 0.8 | FAIL |
 | same-data Markov-equivalent graph swap: split slope (pooled over folds) | 1.000 [0.999, 1.000] | ≥ 0.8 | PASS |
+| KL to Bayes, combined two-variable conditioning, training topologies (bits) | 0.4182 [0.3708, 0.4636] | (reported) |  |
+| KL to Bayes, combined two-variable conditioning, held-out topologies (bits) | 0.4063 [0.3681, 0.4550] | (reported) |  |
 | [balanced] combined do(A,B), strict rules, training topologies (~1000 items/run) | 1.000 [1.000, 1.000] | ≥ 0.8 | PASS |
-| [balanced] matched L1: conditioning on two variables, training topologies | 0.371 [0.303, 0.443] | ≥ 0.8 | FAIL |
+| [balanced] matched L1: conditioning on two variables, training topologies | 0.371 [0.304, 0.445] | ≥ 0.8 | FAIL |
 | [balanced] combined do(A,B), strict rules, held-out topologies (~400 items/run) | 1.000 [1.000, 1.000] | ≥ 0.8 | PASS |
-| [balanced] matched L1: conditioning on two variables, held-out topologies | 0.397 [0.336, 0.452] | ≥ 0.8 | FAIL |
-| [exploratory] relaxed combined do(), train: both pinned variables are parents of T — KL (bits) | 0.0723 [0.0467, 0.0990] | (reported) |  |
-| [exploratory] relaxed combined do(), train: other structures — KL (bits) | 0.0073 [0.0038, 0.0106] | (reported) |  |
-| [exploratory] relaxed combined do(), heldout: both pinned variables are parents of T — KL (bits) | 0.0706 [0.0459, 0.0950] | (reported) |  |
-| [exploratory] relaxed combined do(), heldout: other structures — KL (bits) | 0.0044 [0.0014, 0.0081] | (reported) |  |
+| [balanced] matched L1: conditioning on two variables, held-out topologies | 0.397 [0.342, 0.451] | ≥ 0.8 | FAIL |
+| [exploratory] relaxed combined do(), train: both pinned variables are parents of T — KL (bits) | 0.0723 [0.0446, 0.1003] | (reported) |  |
+| [exploratory] relaxed combined do(), train: other structures — KL (bits) | 0.0073 [0.0040, 0.0110] | (reported) |  |
+| [exploratory] relaxed combined do(), heldout: both pinned variables are parents of T — KL (bits) | 0.0706 [0.0458, 0.0953] | (reported) |  |
+| [exploratory] relaxed combined do(), heldout: other structures — KL (bits) | 0.0044 [0.0013, 0.0081] | (reported) |  |
+
+## E2-full — graph + samples given (the test)
+
+Scored on the frozen sets with the NaN oracle entries repaired (PREDICTIONS.md, Addendum 2; 15/15 runs re-scored).
+
+| fold | GC in-dist | GC held-out (do) | GC held-out (COND) | GC combined held-out | swap slope | outcome (held-out) | outcome (combined) |
+|---|---|---|---|---|---|---|---|
+| 0 | 0.989 [0.974, 0.997] | 0.983 [0.969, 0.991] | 0.860 [0.645, 0.971] | 0.450 [0.186, 0.583] | 0.971 [0.957, 0.977] | H_info | H_arch-like (matched L1 also fails) |
+| 1 | 0.982 [0.961, 0.994] | 0.978 [0.967, 0.984] | 0.811 [0.809, 0.814] | n/a | 0.995 [0.994, 0.997] | H_info | inconclusive |
+| 2 | 0.996 [0.995, 0.996] | 0.987 [0.982, 0.993] | 0.976 [0.973, 0.978] | -0.238 [-0.490, 0.110] | 0.985 [0.983, 0.989] | H_info | H_arch-like (matched L1 also fails) |
+| 3 | 0.974 [0.931, 0.996] | 0.984 [0.957, 0.998] | 0.939 [0.866, 0.977] | n/a | 0.981 [0.948, 0.999] | H_info | inconclusive |
+| 4 | 0.994 [0.991, 0.996] | 0.993 [0.987, 0.998] | 0.974 [0.970, 0.977] | n/a | 0.994 [0.988, 0.997] | H_info | inconclusive |
+
+| criterion | estimate | threshold | verdict |
+|---|---|---|---|
+| GC, in-distribution do() (pooled over folds) | 0.987 [0.977, 0.995] | ≥ 0.85 | PASS |
+| GC, held-out topologies do() (pooled over folds) | 0.985 [0.979, 0.991] | ≥ 0.8 | PASS |
+| GC, held-out topologies, matched L1 (COND) (pooled over folds) | 0.912 [0.861, 0.956] | ≥ 0.8 | PASS |
+| GC, combined interventions (training topologies) (pooled over folds) | 0.221 [0.074, 0.368] | ≥ 0.8 | FAIL |
+| GC, combined interventions (held-out topologies) (pooled over folds) | 0.106 [-0.225, 0.430] | ≥ 0.8 | FAIL |
+| slope (model−L1) on (L2−L1), held-out (pooled over folds) | 0.997 [0.995, 1.000] | ≥ 0.8 | PASS |
+| slope (model−L1) on (L2−L1), combined, held-out (pooled over folds) | 0.428 [0.272, 0.597] | ≥ 0.8 | FAIL |
+| GC, combined, matched L1 (two-variable conditioning), training topologies (pooled over folds) | -6.205 [-6.601, -5.791] | ≥ 0.8 | FAIL |
+| GC, combined, matched L1 (two-variable conditioning), held-out topologies (pooled over folds) | -5.842 [-6.269, -5.434] | ≥ 0.8 | FAIL |
+| same-data Markov-equivalent graph swap: split slope (pooled over folds) | 0.985 [0.978, 0.992] | ≥ 0.8 | PASS |
+| KL to Bayes, combined two-variable conditioning, training topologies (bits) | 0.2781 [0.2621, 0.2925] | (reported) |  |
+| KL to Bayes, combined two-variable conditioning, held-out topologies (bits) | 0.2758 [0.2528, 0.3010] | (reported) |  |
+| [balanced] combined do(A,B), strict rules, training topologies (~300 items/run) | -0.039 [-0.206, 0.144] | ≥ 0.8 | FAIL |
+| [balanced] matched L1: conditioning on two variables, training topologies | -5.755 [-6.170, -5.297] | ≥ 0.8 | FAIL |
+| [balanced] combined do(A,B), strict rules, held-out topologies (~120 items/run) | 0.175 [0.021, 0.340] | ≥ 0.8 | FAIL |
+| [balanced] matched L1: conditioning on two variables, held-out topologies | -6.262 [-6.773, -5.663] | ≥ 0.8 | FAIL |
+| [exploratory] relaxed combined do(), train: both pinned variables are parents of T — KL (bits) | 0.4142 [0.3370, 0.4889] | (reported) |  |
+| [exploratory] relaxed combined do(), train: other structures — KL (bits) | 0.2255 [0.1955, 0.2552] | (reported) |  |
+| [exploratory] relaxed combined do(), heldout: both pinned variables are parents of T — KL (bits) | 0.4088 [0.3402, 0.4776] | (reported) |  |
+| [exploratory] relaxed combined do(), heldout: other structures — KL (bits) | 0.1964 [0.1666, 0.2295] | (reported) |  |
+
+## E2c — no graph; tried do(A), do(B) (the test)
+
+Runs: 3 runs (0 converged, 3 hit the cap)
+
+| criterion | estimate | threshold | verdict |
+|---|---|---|---|
+| GC vs model-free '1¾' baseline, combo | 0.971 [0.969, 0.974] | ≥ 0.8 | PASS |
+|   … sharp half (graph-posterior sd) | 0.980 [0.979, 0.982] | (reported) |  |
+|   … diffuse half (graph-posterior sd) | 0.961 [0.955, 0.964] | (reported) |  |
+| GC vs model-free '1¾' baseline, untried | 0.954 [0.949, 0.956] | ≥ 0.8 | PASS |
+|   … sharp half (graph-posterior sd) | 0.957 [0.955, 0.958] | (reported) |  |
+|   … diffuse half (graph-posterior sd) | 0.952 [0.948, 0.956] | (reported) |  |
+| tried regimes: KL(model) − KL(baseline) (bits) | -0.0409 [-0.0410, -0.0407] | ≤ 0 | PASS |
 
 ## E3 — residual twin with continuous ρ (demonstration)
 
@@ -53,7 +107,7 @@ Runs: {'aware': '5 runs (5 converged, 0 hit the cap)', 'shuffled': '5 runs (5 co
 | criterion | estimate | threshold | verdict |
 |---|---|---|---|
 | mean |slope − ρ|, training ρ bins | 0.009 [0.005, 0.013] | ≤ 0.05 | PASS |
-| mean |slope − ρ|, held-out ρ bins (|ρ|<0.3) | 0.033 [0.010, 0.073] | ≤ 0.10 | PASS |
+| mean |slope − ρ|, held-out ρ bins (|ρ|<0.3) | 0.033 [0.011, 0.074] | ≤ 0.10 | PASS |
 | same-side slope | 0.999 [0.996, 1.001] | 1 ± 0.05 | PASS |
 | normalized excess MSE (cf head) | 0.057 [0.042, 0.073] | ≤ 0.10 | PASS |
 | control 'shuffled': max |slope| over ρ bins | 0.005 [0.004, 0.006] | ≤ 0.05 | PASS |
@@ -66,14 +120,14 @@ Runs: 5 runs (4 converged, 1 hit the cap)
 | criterion | estimate | threshold | verdict |
 |---|---|---|---|
 | log-log slope of posterior sd vs k, OBS_CONF (oracle -0.48) | -0.412 [-0.419, -0.405] | [-0.6, -0.35] | PASS |
-| max |log sd ratio| over k ≥ 16, OBS_CONF | 0.163 [0.146, 0.184] | ≤ 0.140 (ratio in 0.85–1.15) | FAIL |
+| max |log sd ratio| over k ≥ 16, OBS_CONF | 0.163 [0.146, 0.185] | ≤ 0.140 (ratio in 0.85–1.15) | FAIL |
 | 80% coverage over k ≥ 16, OBS_CONF — as implemented (bin-edge rounding) | 0.821 – 0.866 | within 0.77–0.83 | FAIL |
 | 80% coverage over k ≥ 16, OBS_CONF — interpolated (oracle: 0.789–0.811) | 0.790 – 0.815 | within 0.77–0.83 | PASS |
 | log-log slope of posterior sd vs k, OBS_MED (oracle -0.48) | -0.426 [-0.431, -0.419] | [-0.6, -0.35] | PASS |
-| max |log sd ratio| over k ≥ 16, OBS_MED | 0.124 [0.112, 0.140] | ≤ 0.140 (ratio in 0.85–1.15) | PASS (CI crosses) |
+| max |log sd ratio| over k ≥ 16, OBS_MED | 0.124 [0.112, 0.138] | ≤ 0.140 (ratio in 0.85–1.15) | PASS |
 | 80% coverage over k ≥ 16, OBS_MED — as implemented (bin-edge rounding) | 0.816 – 0.870 | within 0.77–0.83 | FAIL |
 | 80% coverage over k ≥ 16, OBS_MED — interpolated (oracle: 0.782–0.808) | 0.785 – 0.813 | within 0.77–0.83 | PASS |
-| log-log slope of posterior sd vs k, HID_MED (oracle -0.48) | -0.429 [-0.434, -0.421] | [-0.6, -0.35] | PASS |
+| log-log slope of posterior sd vs k, HID_MED (oracle -0.48) | -0.429 [-0.433, -0.421] | [-0.6, -0.35] | PASS |
 | max |log sd ratio| over k ≥ 16, HID_MED | 0.125 [0.114, 0.140] | ≤ 0.140 (ratio in 0.85–1.15) | PASS (CI crosses) |
 | 80% coverage over k ≥ 16, HID_MED — as implemented (bin-edge rounding) | 0.825 – 0.865 | within 0.77–0.83 | FAIL |
 | 80% coverage over k ≥ 16, HID_MED — interpolated (oracle: 0.793–0.810) | 0.794 – 0.809 | within 0.77–0.83 | PASS |
@@ -81,4 +135,114 @@ Runs: 5 runs (4 converged, 1 hit the cap)
 | max |log sd ratio| over k ≥ 16, HID_CONF | 0.020 [0.014, 0.029] | ≤ 0.140 (ratio in 0.85–1.15) | PASS |
 | 80% coverage over k ≥ 16, HID_CONF — as implemented (bin-edge rounding) | 0.829 – 0.850 | within 0.77–0.83 | FAIL |
 | 80% coverage over k ≥ 16, HID_CONF — interpolated (oracle: 0.805–0.812) | 0.803 – 0.811 | within 0.77–0.83 | PASS |
+
+## E5 — witness pairs in Misra's task
+
+| criterion | estimate | threshold | verdict |
+|---|---|---|---|
+| E5a restart: GC_TV (programs, a≠0) | 0.992 [0.990, 0.996] | ≥ 0.85 | PASS |
+| E5a restart: flags zeroed → KL to Bayes-L1 (bits) | 0.472 [0.296, 0.686] | ≤ 0.05 | FAIL |
+| E5a clock: GC_TV (programs, a≠0) | 0.998 [0.998, 0.998] | ≥ 0.85 | PASS |
+| E5a clock: flags zeroed → KL to Bayes-L1 (bits) | 0.498 [0.350, 0.588] | ≤ 0.05 | FAIL |
+| E5b cf_abducted: GC_TV noise episodes | 1.000 [1.000, 1.000] | ≥ 0.85 | PASS |
+| E5b cf_abducted: GC_TV program episodes | 0.997 [0.994, 0.998] | ≥ 0.85 | PASS |
+| E5b cf_abducted: GC_TV held-out programs | -0.448 [-1.198, 0.234] | (reported) |  |
+| E5b cf_abducted: factual KL held-out / seen | 174.742 [163.429, 182.117] | ≤ 2 (L1 generalizes) | FAIL |
+| E5b cf_fresh: GC_TV noise episodes | 0.999 [0.999, 0.999] | ≥ 0.85 | PASS |
+| E5b cf_fresh: GC_TV program episodes | 0.988 [0.986, 0.990] | ≥ 0.85 | PASS |
+| E5b cf_fresh: GC_TV held-out programs | -0.078 [-0.391, 0.123] | (reported) |  |
+| E5b cf_fresh: factual KL held-out / seen | 166.242 [153.162, 187.718] | ≤ 2 (L1 generalizes) | FAIL |
+
+## Post hoc (Addendum 1 C) — E2-0 with two-element training queries
+
+Runs: 5 runs (1 converged, 4 hit the cap); one seed per fold, CIs resample runs
+
+| criterion | estimate | threshold | verdict |
+|---|---|---|---|
+| [balanced] two-variable conditioning GC, training topologies (base E2-0: 0.371 [0.305, 0.442]) | 0.979 [0.976, 0.982] | ≥ 0.9 | prediction held |
+| [balanced] two-variable conditioning GC, held-out topologies (base E2-0: 0.397 [0.341, 0.451]) | 0.981 [0.977, 0.984] | ≥ 0.9 | prediction held |
+| [balanced] relaxed combined do(), both pinned variables parents of T, held-out — KL bits (base E2-0: 0.0706 [0.0450, 0.0943]) | 0.0001 [0.0001, 0.0001] | ≤ 0.01 | prediction held |
+| no single-query regression: GC, in-distribution do() | 1.000 [1.000, 1.000] | ≥ 0.99 | prediction held |
+| no single-query regression: GC, held-out do() | 1.000 [1.000, 1.000] | ≥ 0.99 | prediction held |
+| no single-query regression: GC, held-out COND | 0.990 [0.985, 0.995] | ≥ 0.99 | prediction held (CI crosses) |
+
+## Post hoc (Addenda 3–4) — E2-full with two-element training queries
+
+Runs: 5 runs (3 converged, 2 hit the cap)
+
+Primary runs: 2/5 folds meet the Addendum 3 combined-conditioning criteria. One seed per fold; CIs resample runs. Folds [0, 1, 2]: 240k re-run pending (Addendum 4); the plateau-stopped runs stand in.
+
+| fold | run | steps (stop) | cond slope train / held-out | cond KL train / held-out (bits) | combined do() GC train / held-out | [balanced] strict combined do() GC train / held-out | single-query GC in-dist / held-out do() | Addendum 3 cond criteria |
+|---|---|---|---|---|---|---|---|---|
+| 0 | arm 3 (samples_f0_comp25) | 36k (plateau) | 0.973 / 0.971 | 0.0166 / 0.0228 | -0.34 / 0.39 | 0.05 / 0.38 | 0.970 / 0.941 | miss |
+| 1 | arm 3 (samples_f1_comp25) | 36k (plateau) | 0.960 / 0.812 | 0.0227 / 0.0919 | 0.56 / nan | 0.22 / nan | 0.923 / 0.951 | miss |
+| 2 | arm 3 (samples_f2_comp25) | 38k (plateau) | 0.964 / 0.951 | 0.0197 / 0.0216 | 0.57 / -0.27 | 0.33 / 0.13 | 0.969 / 0.956 | miss |
+| 3 | arm 3 (samples_f3_comp25) | 240k (cap) | 0.989 / 0.984 | 0.0041 / 0.0061 | 0.92 / nan | 0.93 / nan | 0.989 / 0.992 | PASS |
+| 4 | arm 3 (samples_f4_comp25) | 240k (cap) | 0.992 / 0.994 | 0.0046 / 0.0030 | 0.85 / nan | 0.91 / nan | 0.994 / 0.983 | PASS |
+
+| criterion | estimate | threshold | verdict |
+|---|---|---|---|
+| combined conditioning slope (model−L2) on (L1−L2), training topologies (base E2-full: 0.369 [0.343, 0.394]) | 0.976 [0.964, 0.987] | ≥ 0.9 | prediction held |
+| combined conditioning slope (model−L2) on (L1−L2), held-out topologies (base E2-full: 0.393 [0.358, 0.423]) | 0.943 [0.876, 0.985] | ≥ 0.9 | prediction held (CI crosses) |
+| combined conditioning KL to Bayes (bits), training topologies (base E2-full: 0.2781 [0.2617, 0.2931]) | 0.0136 [0.0069, 0.0203] | ≤ 0.02 | prediction held (CI crosses) |
+| combined conditioning KL to Bayes (bits), held-out topologies (base E2-full: 0.2758 [0.2549, 0.2983]) | 0.0291 [0.0080, 0.0638] | ≤ 0.02 | prediction failed (CI crosses) |
+| combined do() GC, training topologies (folds whose frozen split has do() items) | 0.510 [0.074, 0.835] | ≥ 0.8 | prediction failed (CI crosses) |
+| combined do() GC, held-out topologies (folds whose frozen split has do() items) | 0.057 [-0.273, 0.387] | ≥ 0.8 | prediction failed |
+| no single-query regression: GC, in-distribution do() | 0.969 [0.946, 0.988] | ≥ 0.85 | prediction held |
+| no single-query regression: GC, held-out do() | 0.964 [0.948, 0.981] | ≥ 0.8 | prediction held |
+| [balanced] two-variable conditioning, training topologies — KL bits (base E2-full: 0.2878 [0.2679, 0.3062]) | 0.0138 [0.0066, 0.0209] | (reported) |  |
+| [balanced] strict combined do(A, B) GC, training topologies (base E2-full: -0.039 [-0.210, 0.140]) | 0.487 [0.183, 0.800] | (reported) |  |
+| [balanced] two-variable conditioning, held-out topologies — KL bits (base E2-full: 0.2728 [0.2523, 0.2931]) | 0.0304 [0.0092, 0.0634] | (reported) |  |
+| [balanced] strict combined do(A, B) GC, held-out topologies (base E2-full: 0.175 [0.012, 0.336]) | 0.256 [0.129, 0.382] | (reported) |  |
+| (control) pre-registered E2-full runs that also ran to the 240k cap (10): combined conditioning KL, training topologies (bits) | 0.2750 [0.2560, 0.2930] | (reported) |  |
+| (control) pre-registered E2-full runs that also ran to the 240k cap (10): combined conditioning KL, held-out topologies (bits) | 0.2658 [0.2405, 0.2970] | (reported) |  |
+
+## Capacity sweep — E2-0
+
+Folds 0-1, 2 seeds per size (Addendum 1 B); means over runs.
+
+| size | params | runs (converged) | GC in-dist do() | GC held-out do() | GC held-out COND | combined cond KL train / held-out (bits) | [balanced] two-variable cond held-out: GC / KL (bits) |
+|---|---|---|---|---|---|---|---|
+| d128L4 | 0.8M | 4 (1) | 0.998 | 0.998 | 0.939 | 0.3857 / 0.3342 | 0.470 / 0.3481 |
+| d128L6 | 1.2M | 4 (0) | 1.000 | 1.000 | 0.981 | 0.4402 / 0.4061 | 0.434 / 0.3732 |
+| d128L8 | 1.6M | 4 (0) | 1.000 | 0.996 | 0.973 | 0.5006 / 0.4715 | 0.267 / 0.4843 |
+| d256L4 | 3.2M | 4 (1) | 0.999 | 0.997 | 0.965 | 0.3394 / 0.3184 | 0.524 / 0.3133 |
+| d256L6 (base) | 4.8M | 4 (2) | 1.000 | 1.000 | 0.993 | 0.4406 / 0.4089 | 0.361 / 0.4222 |
+| d256L8 | 6.3M | 4 (1) | 1.000 | 1.000 | 0.992 | 0.5002 / 0.4346 | 0.345 / 0.4313 |
+| d384L4 | 7.1M | 4 (2) | 1.000 | 0.999 | 0.974 | 0.3950 / 0.3732 | 0.435 / 0.3741 |
+| d384L6 | 10.7M | 4 (1) | 1.000 | 0.998 | 0.987 | 0.4261 / 0.4078 | 0.377 / 0.4134 |
+| d384L8 | 14.2M | 4 (1) | 1.000 | 1.000 | 0.992 | 0.4548 / 0.4039 | 0.404 / 0.3949 |
+
+## Capacity sweep — E2-full
+
+Folds 0-1, 2 seeds per size (Addendum 1 B); means over runs.
+
+| size | params | runs (converged) | GC in-dist do() | GC held-out do() | GC held-out COND | combined cond KL train / held-out (bits) | [balanced] two-variable cond held-out: GC / KL (bits) |
+|---|---|---|---|---|---|---|---|
+| d128L4 | 0.8M | 4 (3) | 0.962 | 0.961 | 0.847 | 0.2672 / 0.2628 | -5.771 / 0.2759 |
+| d256L6 (base) | 4.8M | 4 (2) | 0.981 | 0.977 | 0.809 | 0.2995 / 0.2847 | -6.184 / 0.2927 |
+| d384L8 | 14.3M | 4 (2) | 0.984 | 0.969 | 0.839 | 0.3063 / 0.2863 | -6.334 / 0.2986 |
+
+## Post hoc (Addendum 1 D) — E4 with a 256-bin head
+
+Diagnostics at k = 256, means over 5 seeds; widths from interpolated quantiles. Coverage uses the main E4 analysis's aggregation (each seed's min/max over k, then the mean over seeds); Addendum 2 averaged over seeds first and so reported 2 of 4 cells outside the band, not 3 (HID-MED: 0.8292 vs 0.8301).
+
+| head | cell | steps (stop) | sd ratio k=256 | 80%-width ratio | IQR ratio | mass beyond 5 oracle sd (model / oracle) | posterior-mean RMSE ratio |
+|---|---|---|---|---|---|---|---|
+| 64 bins (main) | OBS_CONF | 38k–120k (cap, plateau) | 1.15–1.22 | 1.021 | 1.011 | 0.18% / 0.01% | 1.007 |
+| 64 bins (main) | OBS_MED | 38k–120k (cap, plateau) | 1.11–1.17 | 0.999 | 0.989 | 0.14% / 0.01% | 1.000 |
+| 64 bins (main) | HID_MED | 38k–120k (cap, plateau) | 1.12–1.17 | 0.994 | 0.985 | 0.13% / 0.01% | 1.000 |
+| 64 bins (main) | HID_CONF | 38k–120k (cap, plateau) | 1.01–1.04 | 0.987 | 1.025 | 0.12% / 0.03% | 1.000 |
+| 256 bins | OBS_CONF | 14k–120k (cap, plateau) | 1.45–1.76 | 1.064 | 1.046 | 0.73% / 0.01% | 1.014 |
+| 256 bins | OBS_MED | 14k–120k (cap, plateau) | 1.44–1.68 | 1.024 | 1.005 | 0.66% / 0.01% | 1.006 |
+| 256 bins | HID_MED | 14k–120k (cap, plateau) | 1.44–1.68 | 1.015 | 0.996 | 0.66% / 0.01% | 1.003 |
+| 256 bins | HID_CONF | 14k–120k (cap, plateau) | 1.11–1.15 | 0.988 | 1.035 | 0.46% / 0.03% | 1.001 |
+
+| criterion | estimate | threshold | verdict |
+|---|---|---|---|
+| OBS-CONF sd ratio at k = 256, 256 bins (64 bins: 1.177 [1.157, 1.201]) | 1.620 [1.519, 1.721] | > 1.10 (excess persists) | prediction held |
+| as-implemented 80% coverage over k ≥ 16, OBS_CONF, 256 bins | 0.8002 – 0.8417 | within 0.77–0.83 | prediction failed |
+| as-implemented 80% coverage over k ≥ 16, OBS_MED, 256 bins | 0.7936 – 0.8376 | within 0.77–0.83 | prediction failed |
+| as-implemented 80% coverage over k ≥ 16, HID_MED, 256 bins | 0.8027 – 0.8301 | within 0.77–0.83 | prediction failed |
+| as-implemented 80% coverage over k ≥ 16, HID_CONF, 256 bins | 0.8112 – 0.8208 | within 0.77–0.83 | prediction held |
 

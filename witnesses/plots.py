@@ -260,9 +260,119 @@ def fig_e2() -> None:
     save(fig, "e2_gap_closed")
 
 
+# ================================================================ E2 two-element queries (post hoc arms)
+def _runs(pattern_fmt: str, folds=range(5), sizes=None) -> list[dict]:
+    return [r for f in folds for r in load_runs("e2", exact=pattern_fmt.format(f=f))]
+
+
+def fig_e2_two_element() -> None:
+    cpt_base, cpt_comp = _runs("cpt_f{f}"), _runs("cpt_f{f}_comp25")
+    s_base, s_comp = _runs("samples_f{f}"), _runs("samples_f{f}_comp25")
+    s_full = _runs("samples_f{f}_comp25full")
+    if not (cpt_base and s_base and s_comp):
+        return
+    s_sweep = [r for sz in ("d128L4", "d384L8") for r in _runs("samples_f{f}_" + sz, folds=(0, 1))]
+    refit = {r["cond"].replace("full", "") for r in s_full}
+    s_short = [r for r in s_comp if r["stop"] == "plateau" and r["cond"] not in refit]
+    s_long = [r for r in s_comp if r["stop"] == "cap"] + s_full
+    kl1 = lambda r: r["final"].get("kl_heldout_cond")  # noqa: E731
+    kl2 = lambda r: r["final"].get("kl_composite_heldout_cond")  # noqa: E731
+    rows = [("Graph + CPT values (E2-0)", None, None, None, None),
+            ("one conditioning variable", cpt_base, kl1, MUTED, True),
+            ("two variables, as pre-registered", cpt_base, kl2, ORANGE, True),
+            ("two variables, + two-element training", cpt_comp, kl2, BLUE, True),
+            ("Graph + 128 samples (E2-full)", None, None, None, None),
+            ("one conditioning variable", s_base, kl1, MUTED, True),
+            ("two variables, as pre-registered", s_base, kl2, ORANGE, True),
+            ("two variables, 0.8M / 14M-parameter models", s_sweep, kl2, ORANGE, False),
+            ("two variables, + two-element training, stopped at ~37k steps", s_short, kl2, BLUE, False),
+            (f"two variables, + two-element training, 240k steps ({len(s_long)} folds)", s_long, kl2, BLUE, True)]
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 4.2), gridspec_kw={"width_ratios": [1.25, 1]})
+    ys = np.arange(len(rows))[::-1].astype(float)
+    allv = []
+    for y, (lab, rr, fn, color, filled) in zip(ys, rows):
+        if rr is None:
+            a1.text(-0.02, y, lab, transform=a1.get_yaxis_transform(), ha="right", va="center", color=INK,
+                    fontsize=9, fontweight="bold")
+            continue
+        v = np.array([fn(r) for r in rr], float)
+        v = v[np.isfinite(v) & (v > 0)]
+        allv += list(v)
+        a1.plot(v, y + np.linspace(-0.15, 0.15, len(v)), "o", ms=4, color=color, alpha=0.8,
+                mfc=color if filled else "white", mec=color, mew=1.1)
+        a1.text(-0.02, y, lab, transform=a1.get_yaxis_transform(), ha="right", va="center", color=INK2, fontsize=8.5)
+    a1.set_xscale("log")
+    a1.set_yticks([])
+    a1.spines["left"].set_visible(False)
+    a1.set_xlabel("KL to the exact Bayes answer, unseen graphs (bits; one dot per run)")
+    a1.set_title("Conditioning on two variables at once", loc="left", pad=16)
+    a1.set_ylim(ys[-1] - 0.6, ys[0] + 0.5)
+    range_frame(a1, allv, [])
+    # learning curves of the E2-full two-element arm
+    curves = []
+    for r in s_comp + s_full:
+        lg = [e for e in r["log"] if np.isfinite(e.get("kl_composite_heldout_cond", np.nan))]
+        st = np.array([e["step"] for e in lg]) / 1000
+        curves.append((r, st, np.array([e["kl_composite_heldout_cond"] for e in lg]),
+                       np.array([e.get("kl_in_dist", np.nan) for e in lg])))
+    yy = []
+    for r, st, kc, ks in curves:
+        long = r["stop"] == "cap" or r["cond"].endswith("full")
+        a2.plot(st, kc, color=BLUE, lw=1.4 if long else 1.0, alpha=0.9 if long else 0.6)
+        if not long:
+            a2.plot(st[-1:], kc[-1:], "o", ms=4, mfc="white", mec=BLUE, mew=1.1)
+        a2.plot(st, ks, color=REF, lw=1.0, ls="--")
+        yy += list(kc) + list(ks[np.isfinite(ks)])
+    a2.set_yscale("log")
+    a2.text(125, 0.03, "two variables", color=BLUE, fontsize=8.5, ha="left")
+    a2.text(125, 0.0005, "one variable (what the\nstopping rule watched)", color=MUTED, fontsize=8.5, ha="left", va="top")
+    short = [c for c in curves if not (c[0]["stop"] == "cap" or c[0]["cond"].endswith("full"))]
+    if short:
+        c = max(short, key=lambda c: c[2][-1])
+        label(a2, c[1][-1], c[2][-1], "stopped by the plateau rule", BLUE, dx=7, dy=0)
+    a2.set_xlabel("training steps (thousands)")
+    a2.set_ylabel("KL to exact Bayes, unseen graphs (bits)")
+    a2.set_title("Two-element training, graph + samples", loc="left", pad=16)
+    range_frame(a2, [0, max(c[1][-1] for c in curves)], yy)
+    fig.tight_layout()
+    save(fig, "e2_two_element")
+
+
+# ================================================================ E2c
+def fig_e2c() -> None:
+    runs = load_runs("e2c", exact="main")
+    if not runs:
+        return
+    groups = [("untried combination do(A, B)", "combo"), ("untried single do(C)", "untried"),
+              ("tried regimes", "tried")]
+    series = [("transformer", "kl_{}", BLUE, 0.22), ("model-free '1¾' learner", "kl_baseline_{}", ORANGE, 0.0),
+              ("knows the true graph, same data", "kl_truegraph_vs_bayes_{}", MUTED, -0.22)]
+    fig, ax = plt.subplots(figsize=(7.2, 3.1))
+    ys = np.arange(len(groups))[::-1].astype(float)
+    allv = []
+    for y, (lab, key) in zip(ys, groups):
+        for sname, fmt_, color, dy in series:
+            v = np.array([r["final"][fmt_.format(key)] for r in runs], float)
+            allv += list(v)
+            ax.plot(v, np.full(v.shape, y + dy), "o", ms=4.5, color=color, alpha=0.85, mec="none")
+            if y == ys[0]:
+                label(ax, v.max(), y + dy, sname, color, dx=7)
+        ax.text(-0.02, y, lab, transform=ax.get_yaxis_transform(), ha="right", va="center", color=INK2, fontsize=8.5)
+    ax.set_xscale("log")
+    ax.set_yticks([])
+    ax.spines["left"].set_visible(False)
+    ax.set_xlabel("KL to ideal Bayesian model averaging (bits; 3 seeds)")
+    ax.set_title("No graph given: data from do(A) and do(B), asked about do(A, B)", loc="left", pad=12)
+    ax.set_ylim(ys[-1] - 0.5, ys[0] + 0.5)
+    range_frame(ax, allv, [])
+    ax.set_xlim(min(allv) / 1.5, max(allv) * 6)
+    fig.tight_layout()
+    save(fig, "e2c_combination")
+
+
 def main() -> None:
     style()
-    for f in (fig_e1, fig_e3, fig_e4, fig_e2):
+    for f in (fig_e1, fig_e3, fig_e4, fig_e2, fig_e2_two_element, fig_e2c):
         try:
             f()
         except Exception as e:  # keep going; report which figure failed

@@ -3,7 +3,8 @@
     python -m witnesses.analyze            # all experiments with results
     python -m witnesses.analyze --exp e1 e3
 
-Outputs: results/summary.json and results/report_tables.md. CIs are 95% percentile bootstrap
+Outputs: results/summary.json, results/report_tables.md, and the generated-tables block of
+REPORT.md (between its BEGIN/END markers); with --exp the selected sections are only printed. CIs are 95% percentile bootstrap
 intervals. Where per-episode predictions were saved, replicates resample seeds AND episodes
 (eval sets are identical across seeds and conditions, so episode indices are shared); otherwise
 they resample seeds only. A verdict is PASS/FAIL on the point estimate; "(CI crosses)" flags
@@ -47,14 +48,29 @@ def load_runs(exp: str, prefix: str | None = None, exact: str | None = None) -> 
         js = json.loads(m.read_text())
         if js.get("status") != "done":
             continue
-        out.append(dict(cond=cond, seed=int(seed), dir=rd, final=js["final"], log=js["log"],
-                        converged=js.get("converged"), steps=js.get("step")))
+        final, rescored = js["final"], False
+        rs = rd / "metrics_rescored.json"
+        if rs.exists():  # E2-full: same frozen items with the NaN oracle entries repaired (Addendum 2)
+            final, rescored = json.loads(rs.read_text())["final"], True
+        out.append(dict(cond=cond, seed=int(seed), dir=rd, final=final, log=js["log"], rescored=rescored,
+                        converged=js.get("converged"), steps=js.get("step"), stop=js.get("stop_reason")))
     return out
+
+
+def balanced(run: dict) -> dict:
+    """Balanced combined-query re-evaluation (scripts/reeval_e2.py, Addendum 1 A), if present."""
+    p = run["dir"] / "metrics_balanced.json"
+    return json.loads(p.read_text())["final"] if p.exists() else {}
+
+
+def n_params(run: dict) -> int | None:
+    p = run["dir"] / "meta.json"
+    return json.loads(p.read_text()).get("n_params") if p.exists() else None
 
 
 def preds(run: dict) -> dict:
     if "_preds" not in run:
-        p = run["dir"] / "eval_preds.npz"
+        p = run["dir"] / ("eval_preds_rescored.npz" if run.get("rescored") else "eval_preds.npz")
         run["_preds"] = dict(np.load(p, allow_pickle=True)) if p.exists() else {}
     return run["_preds"]
 
@@ -245,6 +261,77 @@ def analyze_e4() -> dict:
     return out
 
 
+def _quant(h: np.ndarray, x: float) -> np.ndarray:
+    e = np.linspace(0, 1, h.shape[-1] + 1)
+    c = np.concatenate([np.zeros((h.shape[0], 1)), np.cumsum(h, -1)], -1)
+    return np.array([np.interp(x, ci, e) for ci in c])
+
+
+def e4_tail_diag(p: dict, cell: str, ki: int) -> dict:
+    """Post-hoc E4 diagnostic (Addendum 2): is the sd excess in the posterior core or the far tail?"""
+    mh, oh = p[f"{cell}_model_hist"].astype(float)[:, ki], p[f"{cell}_oracle_hist"].astype(float)[:, ki]
+    nb = mh.shape[-1]
+    cen = (np.arange(nb) + 0.5) / nb
+    wm, wo = _quant(mh, 0.9) - _quant(mh, 0.1), _quant(oh, 0.9) - _quant(oh, 0.1)
+    iqm, iqo = _quant(mh, 0.75) - _quant(mh, 0.25), _quant(oh, 0.75) - _quant(oh, 0.25)
+    om, mm = (oh * cen).sum(-1), (mh * cen).sum(-1)
+    osd = np.sqrt(((oh * cen ** 2).sum(-1) - om ** 2).clip(0))
+    far = np.abs(cen[None] - om[:, None]) > 5 * osd[:, None]
+    p1 = p[f"{cell}_p1"]
+    return dict(width80_ratio=float(np.median(wm / wo)), iqr_ratio=float(np.median(iqm / iqo)),
+                far_tail_mass=float((mh * far).sum(-1).mean()), far_tail_mass_oracle=float((oh * far).sum(-1).mean()),
+                rmse_ratio=float(np.sqrt(((mm - p1) ** 2).mean()) / np.sqrt(((om - p1) ** 2).mean())))
+
+
+def _e4_preds_k256(run: dict) -> dict:
+    """Per-episode histograms at the last eval k (= 256). The 256-bin runs keep only this slice in
+    the repository (eval_preds_k256.npz; the full files are ~76 MB each and are gitignored)."""
+    assert run["final"]["eval_k"][-1] == 256
+    sl = run["dir"] / "eval_preds_k256.npz"
+    return dict(np.load(sl)) if sl.exists() else preds(run)
+
+
+def analyze_e4_bins() -> dict:
+    """Post-hoc arm 2 (Addendum 1 D): the 64-bin main runs vs the 256-bin head."""
+    arms = {"64 bins (main)": load_runs("e4", exact="main"), "256 bins": load_runs("e4", exact="bins256")}
+    if not arms["256 bins"]:
+        return {}
+    rows, out = [], {"by_steps": {}}
+    ks = arms["256 bins"][0]["final"]["eval_k"]
+    ki = ks.index(256)
+    sel = [i for i, k in enumerate(ks) if k >= 16]
+    r256 = seed_boot([r["final"]["obs_conf_sd_ratio"][ki] for r in arms["256 bins"]])
+    r64 = seed_boot([r["final"]["obs_conf_sd_ratio"][ki] for r in arms["64 bins (main)"]])
+    rows.append((f"OBS-CONF sd ratio at k = 256, 256 bins (64 bins: {fmt(r64)})", fmt(r256),
+                 "> 1.10 (excess persists)", _held(r256, 1.10)))
+    for cell in ("obs_conf", "obs_med", "hid_med", "hid_conf"):
+        cov = np.array([r["final"][f"{cell}_cov80"] for r in arms["256 bins"]])
+        lo, hi = cov[:, sel].min(1).mean(), cov[:, sel].max(1).mean()
+        rows.append((f"as-implemented 80% coverage over k ≥ 16, {cell.upper()}, 256 bins", f"{lo:.4f} – {hi:.4f}",
+                     "within 0.77–0.83", "prediction held" if lo >= 0.77 and hi <= 0.83 else "prediction failed"))
+    hdr = ["head", "cell", "steps (stop)", "sd ratio k=256", "80%-width ratio", "IQR ratio",
+           "mass beyond 5 oracle sd (model / oracle)", "posterior-mean RMSE ratio"]
+    trows = []
+    for arm, rr in arms.items():
+        for cell in ("obs_conf", "obs_med", "hid_med", "hid_conf"):
+            d = [e4_tail_diag(_e4_preds_k256(r), cell, -1) for r in rr]
+            m = {k: float(np.mean([x[k] for x in d])) for k in d[0]}
+            sr = [r["final"][f"{cell}_sd_ratio"][ki] for r in rr]
+            steps = sorted({r["steps"] for r in rr})
+            stops = sorted({r["stop"] for r in rr})
+            trows.append([arm, cell.upper(), f"{steps[0] // 1000}k–{steps[-1] // 1000}k ({', '.join(stops)})",
+                          f"{min(sr):.2f}–{max(sr):.2f}", f"{m['width80_ratio']:.3f}", f"{m['iqr_ratio']:.3f}",
+                          f"{100 * m['far_tail_mass']:.2f}% / {100 * m['far_tail_mass_oracle']:.2f}%", f"{m['rmse_ratio']:.3f}"])
+            out.setdefault("diag", {}).setdefault(arm, {})[cell] = m
+        out["by_steps"][arm] = [(r["steps"], r["final"]["obs_conf_sd_ratio"][ki]) for r in rr]
+    out.update(rows=rows, tables=[dict(header=hdr, rows=trows)],
+               note="Diagnostics at k = 256, means over 5 seeds; widths from interpolated quantiles. Coverage uses "
+                    "the main E4 analysis's aggregation (each seed's min/max over k, then the mean over seeds); "
+                    "Addendum 2 averaged over seeds first and so reported 2 of 4 cells outside the band, not 3 "
+                    "(HID-MED: 0.8292 vs 0.8301).")
+    return out
+
+
 def _interp_coverage(p: dict, cell: str, oracle: bool = False) -> np.ndarray:
     """Coverage of the TRUE p1 by central 80% intervals with quantiles linearly interpolated within
     the 64 bins (the bin-edge version in E4's evaluate() rounds outward and over-covers even for the
@@ -298,10 +385,23 @@ def analyze_e2(mode: str) -> dict:
                             ("gc_composite_train_do", 0.8, "GC, combined interventions (training topologies)"),
                             ("gc_composite_heldout_do", 0.8, "GC, combined interventions (held-out topologies)"),
                             ("slope_heldout_do", 0.8, "slope (model−L1) on (L2−L1), held-out"),
+                            ("slope_composite_heldout_do", 0.8, "slope (model−L1) on (L2−L1), combined, held-out"),
+                            ("gc_composite_train_cond", 0.8,
+                             "GC, combined, matched L1 (two-variable conditioning), training topologies"),
+                            ("gc_composite_heldout_cond", 0.8,
+                             "GC, combined, matched L1 (two-variable conditioning), held-out topologies"),
                             ("swap_slope", 0.8, "same-data Markov-equivalent graph swap: split slope")):
         est = seed_boot([r["final"].get(key) for r in flat])
         rows.append((label + " (pooled over folds)", fmt(est), f"≥ {thr}", verdict(est, thr)))
         out[key] = est
+    for key, label in (("kl_composite_train_cond", "training"), ("kl_composite_heldout_cond", "held-out")):
+        est = seed_boot([r["final"].get(key) for r in flat])
+        rows.append((f"KL to Bayes, combined two-variable conditioning, {label} topologies (bits)", fmt(est, 4),
+                     "(reported)", ""))
+        out[key] = est
+    if any(r["rescored"] for r in flat):
+        out["note"] = ("Scored on the frozen sets with the NaN oracle entries repaired (PREDICTIONS.md, Addendum 2; "
+                       f"{sum(r['rescored'] for r in flat)}/{len(flat)} runs re-scored).")
     # balanced combined-query re-evaluation (scripts/reeval_e2.py), when available
     bal = []
     for rr in allf:
@@ -330,6 +430,154 @@ def analyze_e2(mode: str) -> dict:
         out["balanced_runs"] = len(bal)
     out["rows"] = rows
     return out
+
+
+# ================================================================ E2 post hoc (PREDICTIONS.md, Addenda 1, 3, 4)
+def _est1(v) -> tuple[float, float, float]:
+    return (float(v) if v is not None else float("nan"), float("nan"), float("nan"))
+
+
+def _pool(runs: list[dict], key: str, bal: bool = False) -> tuple[float, float, float]:
+    return seed_boot([(balanced(r) if bal else r["final"]).get(key) for r in runs])
+
+
+def _held(est: tuple, lo=None, hi=None) -> str:
+    v = verdict(est, lo, hi)
+    return v.replace("PASS", "prediction held").replace("FAIL", "prediction failed")
+
+
+def analyze_e2_cpt_comp() -> dict:
+    """Post-hoc arm 1 (Addendum 1 C): E2-0 with 25% two-effective-element training queries."""
+    arm = [r for f in range(5) for r in load_runs("e2", exact=f"cpt_f{f}_comp25")]
+    if not arm:
+        return {}
+    base = [r for f in range(5) for r in load_runs("e2", exact=f"cpt_f{f}")]
+    rows, out = [], {"runs": conv_note(arm) + "; one seed per fold, CIs resample runs"}
+    for split, lab in (("train", "training"), ("heldout", "held-out")):
+        e, b = _pool(arm, f"gc_composite_{split}_strict_cond", True), _pool(base, f"gc_composite_{split}_strict_cond", True)
+        rows.append((f"[balanced] two-variable conditioning GC, {lab} topologies (base E2-0: {fmt(b)})",
+                     fmt(e), "≥ 0.9", _held(e, 0.9)))
+        out[f"bal_gc_{split}_strict_cond"], out[f"base_bal_gc_{split}_strict_cond"] = e, b
+    e = _pool(arm, "kl_composite_heldout_relaxed_do_both_parents", True)
+    b = _pool(base, "kl_composite_heldout_relaxed_do_both_parents", True)
+    rows.append((f"[balanced] relaxed combined do(), both pinned variables parents of T, held-out — KL bits "
+                 f"(base E2-0: {fmt(b, 4)})", fmt(e, 4), "≤ 0.01", _held(e, None, 0.01)))
+    out["bal_kl_heldout_relaxed_do_both_parents"], out["base_bal_kl_heldout_relaxed_do_both_parents"] = e, b
+    for key, lab in (("gc_in_dist_do", "in-distribution do()"), ("gc_heldout_do", "held-out do()"),
+                     ("gc_heldout_cond", "held-out COND")):
+        e = _pool(arm, key)
+        rows.append((f"no single-query regression: GC, {lab}", fmt(e), "≥ 0.99", _held(e, 0.99)))
+        out[key] = e
+    out["rows"] = rows
+    return out
+
+
+ARM3_CRIT = (("slope_composite_train_cond", 0.9, None), ("slope_composite_heldout_cond", 0.9, None),
+             ("kl_composite_train_cond", None, 0.02), ("kl_composite_heldout_cond", None, 0.02))
+
+
+def _arm3_ok(fin: dict) -> str:
+    ok = all(np.isfinite(fin.get(k, np.nan)) and (lo is None or fin[k] >= lo) and (hi is None or fin[k] <= hi)
+             for k, lo, hi in ARM3_CRIT)
+    return "PASS" if ok else "miss"
+
+
+def analyze_e2_samples_comp() -> dict:
+    """Post-hoc arm 3 (Addenda 3-4): E2-full with two-effective-element training. Folds 0-2 were
+    re-run to the 240k cap (Addendum 4); those runs are primary when present, the plateau-stopped
+    runs are kept as a training-length comparison."""
+    short = {f: load_runs("e2", exact=f"samples_f{f}_comp25") for f in range(5)}
+    full = {f: load_runs("e2", exact=f"samples_f{f}_comp25full") for f in range(5)}
+    if not any(short.values()):
+        return {}
+    hdr = ["fold", "run", "steps (stop)", "cond slope train / held-out", "cond KL train / held-out (bits)",
+           "combined do() GC train / held-out", "[balanced] strict combined do() GC train / held-out",
+           "single-query GC in-dist / held-out do()", "Addendum 3 cond criteria"]
+    trows, primary, pending = [], [], []
+    for f in range(5):
+        for tag, rr in (("240k re-run", full[f]), ("arm 3", short[f])):
+            for r in rr:
+                fin, bal = r["final"], balanced(r)
+                g = lambda k: fin.get(k, float("nan"))  # noqa: E731
+                gb = lambda k: bal.get(k, float("nan"))  # noqa: E731
+                trows.append([str(f), f"{tag} ({r['cond']})", f"{r['steps'] // 1000}k ({r['stop']})",
+                              f"{g('slope_composite_train_cond'):.3f} / {g('slope_composite_heldout_cond'):.3f}",
+                              f"{g('kl_composite_train_cond'):.4f} / {g('kl_composite_heldout_cond'):.4f}",
+                              f"{g('gc_composite_train_do'):.2f} / {g('gc_composite_heldout_do'):.2f}",
+                              f"{gb('gc_composite_train_strict_do'):.2f} / {gb('gc_composite_heldout_strict_do'):.2f}",
+                              f"{g('gc_in_dist_do'):.3f} / {g('gc_heldout_do'):.3f}", _arm3_ok(fin)])
+        if full[f]:
+            primary += full[f]
+        elif f <= 2:
+            pending.append(f)
+            primary += short[f]
+        else:
+            primary += short[f]
+    rows = []
+    base = [r for f in range(5) for r in load_runs("e2", exact=f"samples_f{f}")]
+    topo = {"train": "training topologies", "heldout": "held-out topologies"}
+    for key, lo, hi in ARM3_CRIT:
+        split = key.split("_")[2]
+        e, b = _pool(primary, key), _pool(base, key)
+        what = "slope (model−L2) on (L1−L2)" if lo else "KL to Bayes (bits)"
+        rows.append((f"combined conditioning {what}, {topo[split]} (base E2-full: {fmt(b, 4 if hi else 3)})",
+                     fmt(e, 4 if hi else 3), f"≥ {lo}" if lo else f"≤ {hi}", _held(e, lo, hi)))
+    for key in ("gc_composite_train_do", "gc_composite_heldout_do"):
+        e = _pool(primary, key)
+        rows.append((f"combined do() GC, {topo[key.split('_')[2]]} (folds whose frozen split has do() items)",
+                     fmt(e), "≥ 0.8", _held(e, 0.8)))
+    for key, thr, lab in (("gc_in_dist_do", 0.85, "in-distribution do()"), ("gc_heldout_do", 0.8, "held-out do()")):
+        e = _pool(primary, key)
+        rows.append((f"no single-query regression: GC, {lab}", fmt(e), f"≥ {thr}", _held(e, thr)))
+    for split in ("train", "heldout"):
+        e, b = _pool(primary, f"kl_composite_{split}_strict_cond", True), _pool(base, f"kl_composite_{split}_strict_cond", True)
+        rows.append((f"[balanced] two-variable conditioning, {topo[split]} — KL bits (base E2-full: {fmt(b, 4)})",
+                     fmt(e, 4), "(reported)", ""))
+        e, b = _pool(primary, f"gc_composite_{split}_strict_do", True), _pool(base, f"gc_composite_{split}_strict_do", True)
+        rows.append((f"[balanced] strict combined do(A, B) GC, {topo[split]} (base E2-full: {fmt(b)})",
+                     fmt(e), "(reported)", ""))
+    capped = [r for r in base if r["stop"] == "cap"]
+    if capped:
+        for split in ("train", "heldout"):
+            e = _pool(capped, f"kl_composite_{split}_cond")
+            rows.append((f"(control) pre-registered E2-full runs that also ran to the 240k cap ({len(capped)}): combined "
+                         f"conditioning KL, {topo[split]} (bits)", fmt(e, 4), "(reported)", ""))
+    n_pass = sum(_arm3_ok(r["final"]) == "PASS" for r in primary)
+    note = (f"Primary runs: {n_pass}/{len(primary)} folds meet the Addendum 3 combined-conditioning criteria. "
+            "One seed per fold; CIs resample runs.")
+    if pending:
+        note += f" Folds {pending}: 240k re-run pending (Addendum 4); the plateau-stopped runs stand in."
+    return {"runs": conv_note(primary), "note": note, "rows": rows, "n_pass": n_pass, "pending": pending,
+            "tables": [dict(header=hdr, rows=trows)]}
+
+
+def analyze_e2_sweep(mode: str) -> dict:
+    """Capacity sweep on folds 0-1 (2 seeds per size); the base size uses the main runs' seeds 0-1."""
+    sizes = {}
+    for f in (0, 1):
+        for r in load_runs("e2", prefix=f"{mode}_f{f}_d"):
+            sizes.setdefault(r["cond"].split("_")[-1], []).append(r)
+        sizes.setdefault("base", []).extend(r for r in load_runs("e2", exact=f"{mode}_f{f}") if r["seed"] in (0, 1))
+    if len(sizes) <= 1:
+        return {}
+    hdr = ["size", "params", "runs (converged)", "GC in-dist do()", "GC held-out do()", "GC held-out COND",
+           "combined cond KL train / held-out (bits)", "[balanced] two-variable cond held-out: GC / KL (bits)"]
+    trows, out = [], {}
+    order = sorted(sizes, key=lambda k: n_params(sizes[k][0]) or 0)
+    for k in order:
+        rr = sizes[k]
+        g = {key: _pool(rr, key) for key in ("gc_in_dist_do", "gc_heldout_do", "gc_heldout_cond",
+                                             "kl_composite_train_cond", "kl_composite_heldout_cond")}
+        bc = _pool(rr, "gc_composite_heldout_strict_cond", True)
+        bk = _pool(rr, "kl_composite_heldout_strict_cond", True)
+        label = k if k != "base" else ("d256L6 (base)")
+        trows.append([label, f"{(n_params(rr[0]) or 0) / 1e6:.1f}M", f"{len(rr)} ({sum(bool(r['converged']) for r in rr)})",
+                      f"{g['gc_in_dist_do'][0]:.3f}", f"{g['gc_heldout_do'][0]:.3f}", f"{g['gc_heldout_cond'][0]:.3f}",
+                      f"{g['kl_composite_train_cond'][0]:.4f} / {g['kl_composite_heldout_cond'][0]:.4f}",
+                      f"{bc[0]:.3f} / {bk[0]:.4f}"])
+        out[label] = dict(g, bal_gc_heldout_strict_cond=bc, bal_kl_heldout_strict_cond=bk, n_params=n_params(rr[0]))
+    return {"sizes": out, "rows": [], "tables": [dict(header=hdr, rows=trows)],
+            "note": "Folds 0-1, 2 seeds per size (Addendum 1 B); means over runs."}
 
 
 def analyze_e2c() -> dict:
@@ -385,7 +633,14 @@ SECTIONS = [("e1", "E1 — Simpson pair over six orderings (demonstration)", ana
             ("e2c", "E2c — no graph; tried do(A), do(B) (the test)", analyze_e2c),
             ("e3", "E3 — residual twin with continuous ρ (demonstration)", analyze_e3),
             ("e4", "E4 — identifiability tracking (demonstration)", analyze_e4),
-            ("e5", "E5 — witness pairs in Misra's task", analyze_e5)]
+            ("e5", "E5 — witness pairs in Misra's task", analyze_e5),
+            ("posthoc_e2_cpt_comp", "Post hoc (Addendum 1 C) — E2-0 with two-element training queries",
+             analyze_e2_cpt_comp),
+            ("posthoc_e2_samples_comp", "Post hoc (Addenda 3–4) — E2-full with two-element training queries",
+             analyze_e2_samples_comp),
+            ("posthoc_e2_cpt_sweep", "Capacity sweep — E2-0", lambda: analyze_e2_sweep("cpt")),
+            ("posthoc_e2_samples_sweep", "Capacity sweep — E2-full", lambda: analyze_e2_sweep("samples")),
+            ("posthoc_e4_bins", "Post hoc (Addendum 1 D) — E4 with a 256-bin head", analyze_e4_bins)]
 
 
 def _jsonable(o):
@@ -398,6 +653,9 @@ def _jsonable(o):
     if isinstance(o, np.ndarray):
         return o.tolist()
     return o
+
+
+BEGIN, END = "<!-- BEGIN GENERATED TABLES -->", "<!-- END GENERATED TABLES -->"
 
 
 def main() -> None:
@@ -417,6 +675,12 @@ def main() -> None:
         md += [f"## {title}", ""]
         if "runs" in res:
             md += [f"Runs: {res['runs']}", ""]
+        if "note" in res:
+            md += [res["note"], ""]
+        for t in res.get("tables", []):
+            md += ["| " + " | ".join(t["header"]) + " |", "|" + "---|" * len(t["header"])]
+            md += ["| " + " | ".join(row) + " |" for row in t["rows"]]
+            md.append("")
         if key.startswith("e2_") and res.get("folds"):
             md += ["| fold | GC in-dist | GC held-out (do) | GC held-out (COND) | GC combined held-out | swap slope | outcome (held-out) | outcome (combined) |",
                    "|---|---|---|---|---|---|---|---|"]
@@ -424,11 +688,22 @@ def main() -> None:
                 md.append(f"| {f} | {fmt(r['gc_in_dist_do'])} | {fmt(r['gc_heldout_do'])} | {fmt(r['gc_heldout_cond'])} | "
                           f"{fmt(r['gc_composite_heldout_do'])} | {fmt(r['swap_slope'])} | {r['outcome_heldout']} | {r['outcome_combined']} |")
             md.append("")
-        md += ["| criterion | estimate | threshold | verdict |", "|---|---|---|---|"]
-        md += [f"| {r[0]} | {r[1]} | {r[2]} | {r[3]} |" for r in res["rows"]]
-        md.append("")
+        if res["rows"]:
+            md += ["| criterion | estimate | threshold | verdict |", "|---|---|---|---|"]
+            md += [f"| {r[0]} | {r[1]} | {r[2]} | {r[3]} |" for r in res["rows"]]
+            md.append("")
+    if a.exp:  # partial runs print only; the files always hold the full analysis
+        print("\n".join(md))
+        return
     (RES / "summary.json").write_text(json.dumps(_jsonable(summary), indent=1, default=str))
     (RES / "report_tables.md").write_text("\n".join(md) + "\n")
+    rep = ROOT / "REPORT.md"
+    if rep.exists():
+        txt = rep.read_text()
+        i, j = txt.find(BEGIN), txt.find(END)
+        if 0 <= i < j:
+            body = "\n".join(line.replace("## ", "### ", 1) if line.startswith("## ") else line for line in md[2:])
+            rep.write_text(txt[: i + len(BEGIN)] + "\n" + body + "\n" + txt[j:])
     print("\n".join(md))
 
 
