@@ -114,7 +114,8 @@ def main() -> None:
                 pm = preds[f"{name}_model"][:, -1].astype(np.float64)
                 pa, A, B, T = (ep[k].numpy() for k in ("pa", "q_A", "q_B", "q_T"))
                 both = np.array([(pa[i, T[i]] >> A[i] & 1) and (pa[i, T[i]] >> B[i] & 1) for i in range(len(A))], bool)
-                right = np.where(isc, ep["ans_cond"].numpy(), ep["ans_do"].numpy())
+                # graph-aware Bayes answers at the last k (= the exact answers in cpt mode)
+                right = np.where(isc, preds[f"{name}_l1"][:, -1], preds[f"{name}_l2"][:, -1]).astype(np.float64)
                 kl = kl_bernoulli_bits(right, pm)
                 for qn, qs in (("do", ~isc), ("cond", isc)):
                     for tag, ss in (("both_parents", both), ("other", ~both)):

@@ -1,0 +1,11 @@
+# POST-HOC re-run of arm 3 (PREDICTIONS.md, Addendum 4): identical to samples_comp_f2.yaml except
+# min_steps = the 240k step cap, so the plateau rule (which watches single-query KL) cannot stop the
+# run early; every fold then follows the schedule folds 3-4 of arm 3 followed.
+exp: e2
+condition: samples_f2_comp25full
+task: e2_dags
+task_args: {mode: samples, fold: 2, n_samples: 128, p_cond: 0.5, p_inert: 0.5, mc: 2048, n_eval_per_split: 1000, p_composite_train: 0.25}
+model: {d_model: 256, n_layers: 6, n_heads: 8}
+smoke_model: {d_model: 64, n_layers: 2, n_heads: 4}
+optim: {lr: 3.0e-4, batch_size: 256}
+schedule: {base_steps: 60000, min_steps: 240000, eval_every: 2000}

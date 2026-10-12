@@ -1,0 +1,8 @@
+# Addendum 4 (approved 2026-10-12): arm 3 folds 0-2 re-run to the 240k step cap. Run by
+# scripts/wave2c.sh, which then re-scores the new checkpoints and powers the instance off.
+name: wave2c
+workers: 2
+jobs:
+- {config: configs/e2/samples_comp_full_f0.yaml, seeds: [0]}
+- {config: configs/e2/samples_comp_full_f1.yaml, seeds: [0]}
+- {config: configs/e2/samples_comp_full_f2.yaml, seeds: [0]}

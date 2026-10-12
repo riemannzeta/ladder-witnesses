@@ -234,3 +234,31 @@ Everything above this line was committed before any training (commit `3f434c8`).
   - combined do(): GC ≥ 0.8 wherever the split has do() items;
   - no regression on the single-query criteria (in-distribution do() GC ≥ 0.85, held-out ≥ 0.8).
 - **Reading:** as in the table under Addendum 1 C. Additionally, if E2-0 recovers but E2-full does not, the obstacle is the combination of estimating from data and composing two elements, not composition alone.
+
+---
+
+## Addendum 4 (2026-10-12): arm 3, folds 0–2 re-run to the step cap (written after all five arm-3 runs, before the re-runs)
+
+- **Why.** In arm 3 the plateau rule watched the inherited E2-full headline, single-query in-distribution KL. That metric levels off long before combined-query performance does; for an arm whose question is combined queries, it was the wrong metric to stop on (a setup oversight).
+  - Folds 0–2 met the rule at 36k, 36k and 38.4k steps. Folds 3–4 never met it and ran to the 240k cap.
+  - Every fold that meets the Addendum 3 combined-conditioning criteria ran to the cap, and every fold that misses stopped early. Fold and training length are therefore aliased.
+- **Arm-3 results as they stand** (combined conditioning, frozen sets after the Addendum 2 repair; train / held-out topologies):
+
+  | Fold | Steps | Slope | KL (bits) | Addendum 3 criteria |
+  |---|---|---|---|---|
+  | 0 | 36k (plateau) | 0.97 / 0.97 | 0.017 / 0.023 | held-out KL misses |
+  | 1 | 36k (plateau) | 0.96 / 0.81 | 0.023 / 0.092 | misses (held-out slope and KL; train KL) |
+  | 2 | 38.4k (plateau) | 0.96 / 0.95 | 0.020 / 0.022 | held-out KL misses |
+  | 3 | 240k (cap) | 0.99 / 0.98 | 0.004 / 0.006 | pass |
+  | 4 | 240k (cap) | 0.99 / 0.99 | 0.005 / 0.003 | pass |
+
+- **Design.** `samples_f<k>_comp25full`, folds 0–2, seed 0 (3 runs), configs `configs/e2/samples_comp_full_f<k>.yaml`, queue `wave2c` (`scripts/wave2c.sh`).
+  - Identical to arm 3 except `min_steps` = 240k = the cap, so the plateau rule cannot fire. Every run follows the schedule folds 3–4 followed: constant learning rate, then the cap-placed cooldown from 192k, ending at 240k.
+  - Scored on the repaired frozen sets (`scripts/rescore_e2_samples.py --only comp25full`, reusing the existing repaired files) and on the same balanced sets as every other samples-mode run (`scripts/reeval_e2.py --mode samples --n-per-type 300`).
+- **Decision rules, fixed now.**
+  - The thresholds are those of Addendum 3, unchanged.
+  - For folds 0–2, the 240k runs become the primary arm-3 rows whatever they show. The 36–38k runs stay in `REPORT.md` as a training-length comparison and are not dropped.
+  - A fold that still misses at 240k is reported as a miss at the same training length as the passing folds. As for every capped run, the trainer marks it unconverged, so it is not read as a capability limit.
+  - No further re-runs of this arm.
+- **Expectation (not a criterion).** Folds 0 and 2 reach KL ≤ 0.01 bits and slope ≥ 0.95 on combined conditioning, on both topology sets. Fold 1's held-out topologies are the least certain (slope 0.81 at 36k).
+  - Combined do() verdicts stay weak in every fold: the frozen sets hold few such items, and the slope R² is below 0.35 in folds 0–2 at 36k.
