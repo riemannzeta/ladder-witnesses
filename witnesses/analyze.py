@@ -20,6 +20,7 @@ from pathlib import Path
 
 import numpy as np
 
+from witnesses.tasks import dag_utils as du
 from witnesses.tasks.base import fit_slope, kl_bernoulli_bits
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -547,8 +548,68 @@ def analyze_e2_samples_comp() -> dict:
             "One seed per fold; CIs resample runs.")
     if pending:
         note += f" Folds {pending}: 240k re-run pending (Addendum 4); the plateau-stopped runs stand in."
+    tables = [dict(header=hdr, rows=trows)]
+    by_topo = _topo_breakdown(short, full)
+    if by_topo:
+        tables.append(by_topo)
+        note += (" Second table (post hoc, exploratory): balanced held-out two-element KL by topology. "
+                 "'collider with a child' = an unshielded collider whose middle node has a child; "
+                 "'in training' = some training topology of that fold has one too.")
     return {"runs": conv_note(primary), "note": note, "rows": rows, "n_pass": n_pass, "pending": pending,
-            "tables": [dict(header=hdr, rows=trows)]}
+            "tables": tables}
+
+
+def _collider_with_child(t: int) -> bool:
+    rep = du.topologies()[t]["rep"]
+    return any(any((rep[c] >> v[2]) & 1 for c in range(4)) for v in du.v_structures(tuple(rep)))
+
+
+def _topo_kl(run: dict, split: str) -> dict:
+    """Balanced strict two-element KL (bits, mean over k >= 8 as in the pooled rows) per held-out topology."""
+    p = run["dir"] / "balanced_preds.npz"
+    if not p.exists():
+        return {}
+    z, n = np.load(p), f"composite_{split}_strict"
+    isc, topo, pm = z[f"{n}_is_cond"], z[f"{n}_topo"], z[f"{n}_model"].astype(np.float64)
+    right = np.where(isc[:, None], z[f"{n}_l1"], z[f"{n}_l2"]).astype(np.float64)
+    kc = slice(1, None) if pm.shape[1] > 1 else slice(None)  # samples: k in (8, 32, 128); cpt: exact
+    kl = kl_bernoulli_bits(right[:, kc], pm[:, kc]).mean(1)
+    out = {}
+    for t in np.unique(topo):
+        for qn, qs in (("cond", isc), ("do", ~isc)):
+            s = qs & (topo == t)
+            if s.any():
+                out[(int(t), qn)] = (int(s.sum()), float(kl[s].mean()))
+    return out
+
+
+def _topo_breakdown(short: dict, full: dict) -> dict | None:
+    folds = du.load_folds()
+    trows = []
+    for f in range(5):
+        if not short[f]:
+            continue
+        if full[f]:
+            a, b = _topo_kl(short[f][0], "heldout"), _topo_kl(full[f][0], "heldout")
+        elif short[f][0]["stop"] == "cap":  # folds 3-4: arm 3 itself ran to the cap
+            a, b = {}, _topo_kl(short[f][0], "heldout")
+        else:
+            continue
+        c0 = load_runs("e2", exact=f"cpt_f{f}_comp25")
+        c = _topo_kl(c0[0], "heldout") if c0 else {}
+        train_cwc = any(_collider_with_child(t) for g, fl in enumerate(folds) if g != f for t in fl)
+        for (t, qn) in sorted(b):
+            cwc = _collider_with_child(t)
+            trows.append([str(f), f"T{t} ({int(du.topologies()[t]['n_edges'])} edges)",
+                          ("yes" + (" (in training)" if train_cwc else " (not in training)")) if cwc else "no",
+                          "two-variable conditioning" if qn == "cond" else "strict combined do()", str(b[(t, qn)][0]),
+                          f"{a[(t, qn)][1]:.4f}" if (t, qn) in a else "—", f"{b[(t, qn)][1]:.4f}",
+                          f"{c[(t, qn)][1]:.4f}" if (t, qn) in c else "—"])
+    if not trows:
+        return None
+    return dict(header=["fold", "held-out topology", "collider with a child", "query", "n",
+                        "KL arm 3 stopped at 36–38k (bits)", "KL at 240k (bits)", "E2-0 arm 1, CPT tokens (bits)"],
+                rows=trows)
 
 
 def analyze_e2_sweep(mode: str) -> dict:

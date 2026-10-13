@@ -272,8 +272,7 @@ def fig_e2_two_element() -> None:
     if not (cpt_base and s_base and s_comp):
         return
     s_sweep = [r for sz in ("d128L4", "d384L8") for r in _runs("samples_f{f}_" + sz, folds=(0, 1))]
-    refit = {r["cond"].replace("full", "") for r in s_full}
-    s_short = [r for r in s_comp if r["stop"] == "plateau" and r["cond"] not in refit]
+    s_short = [r for r in s_comp if r["stop"] == "plateau"]  # kept as the training-length comparison (Addendum 4)
     s_long = [r for r in s_comp if r["stop"] == "cap"] + s_full
     kl1 = lambda r: r["final"].get("kl_heldout_cond")  # noqa: E731
     kl2 = lambda r: r["final"].get("kl_composite_heldout_cond")  # noqa: E731
@@ -285,7 +284,7 @@ def fig_e2_two_element() -> None:
             ("one conditioning variable", s_base, kl1, MUTED, True),
             ("two variables, as pre-registered", s_base, kl2, ORANGE, True),
             ("two variables, 0.8M / 14M-parameter models", s_sweep, kl2, ORANGE, False),
-            ("two variables, + two-element training, stopped at ~37k steps", s_short, kl2, BLUE, False),
+            ("two variables, + two-element training, stopped at 36–38k", s_short, kl2, BLUE, False),
             (f"two variables, + two-element training, 240k steps ({len(s_long)} folds)", s_long, kl2, BLUE, True)]
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 4.2), gridspec_kw={"width_ratios": [1.25, 1]})
     ys = np.arange(len(rows))[::-1].astype(float)
@@ -325,11 +324,14 @@ def fig_e2_two_element() -> None:
         yy += list(kc) + list(ks[np.isfinite(ks)])
     a2.set_yscale("log")
     a2.text(125, 0.03, "two variables", color=BLUE, fontsize=8.5, ha="left")
-    a2.text(125, 0.0005, "one variable (what the\nstopping rule watched)", color=MUTED, fontsize=8.5, ha="left", va="top")
-    short = [c for c in curves if not (c[0]["stop"] == "cap" or c[0]["cond"].endswith("full"))]
-    if short:
-        c = max(short, key=lambda c: c[2][-1])
-        label(a2, c[1][-1], c[2][-1], "stopped by the plateau rule", BLUE, dx=7, dy=0)
+    a2.text(30, 0.0006, "one variable (what the\nstopping rule watched)", color=MUTED, fontsize=8.5, ha="left", va="top")
+    if any(not (c[0]["stop"] == "cap" or c[0]["cond"].endswith("full")) for c in curves):
+        a2.plot([6], [0.3], "o", ms=4, mfc="white", mec=BLUE, mew=1.1)
+        a2.text(14, 0.3, "stopped by the plateau rule (36–38k)", color=BLUE, fontsize=8.5, va="center")
+    worst = max((c for c in curves if c[0]["cond"].endswith("full")), key=lambda c: c[2][-1], default=None)
+    if worst is not None and worst[2][-1] > 0.05:
+        f = worst[0]["cond"].split("_")[1][1:]
+        a2.text(worst[1][-1], worst[2][-1] * 1.35, f"fold {f}", color=BLUE, fontsize=8.5, ha="right", va="bottom")
     a2.set_xlabel("training steps (thousands)")
     a2.set_ylabel("KL to exact Bayes, unseen graphs (bits)")
     a2.set_title("Two-element training, graph + samples", loc="left", pad=16)

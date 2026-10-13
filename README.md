@@ -26,8 +26,10 @@ Full verdicts, with confidence intervals: [`REPORT.md`](REPORT.md). Pre-registra
   - E2: untried interventions on unseen graphs close 100% of the gap with CPTs and 98.5% with samples.
 - **Without a graph (E2c):** given data from tried do(A) and do(B), the untried do(A, B) closes 97% of the gap between the best model-free learner and ideal Bayesian model averaging.
 - **Composite queries failed in the pre-registered runs:** two-variable conditioning in E2-0, and combined interventions as well as conditioning in E2-full. Neither capacity (0.8M–14M parameters) nor training length helped.
-  - **Post hoc:** adding two-element queries to training fixed it on unseen graphs (E2-0: GC 0.98). So the failure was a gap in the training distribution, not a rung-two barrier.
-  - Three E2-full re-runs are pending (Addendum 4).
+  - **Post hoc:** adding two-element queries to training fixed it. With CPTs (E2-0), it transferred to every unseen graph (GC 0.98). With samples (E2-full, all folds at 240k steps), every fold's training graphs passed and most unseen graphs did too.
+  - **Two exceptions, both with samples, neither improved by longer training:**
+    - two-variable conditioning on the only two graph shapes where a collider has a child (fold 1, which never trains on that pattern);
+    - combined do() on the 5-edge graph T24 (fold 2), where the matched conditioning query passes.
 - **E4:** posterior width plateaus exactly where the effect is not identified (log-log slope −0.12, against −0.13 for the exact posterior). The sd-ratio and as-implemented coverage criteria failed (a far-tail softmax floor, and a flawed coverage metric).
 - **E5:** the same witness pairs work in Misra's recurrence on seen programs (GC_TV ≥ 0.99). On held-out programs, even factual prediction fails.
 - **E6:** Opus 5.5, Sonnet 5.5 and Fable 5.1 answer verbal versions correctly and say "not determinable" when the information is missing. Haiku 4.5 often does not.

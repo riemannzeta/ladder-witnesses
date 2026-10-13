@@ -2,12 +2,10 @@
 
 Pre-registration: [`PREDICTIONS.md`](PREDICTIONS.md). The main document was committed before any training (`3f434c8`); Addenda 1–4 record every later change, each written before the runs it governs. Every pre-registered criterion is reported here exactly as defined, with its verdict. Anything that was not pre-registered is labeled **post hoc**.
 
-**Status (2026-10-12):**
-- Complete:
-  - wave 1 (77 runs) and wave 2 (48 runs);
-  - post-hoc arms 1–3 (5 + 5 + 5 runs);
-  - E6 (800 items × 4 Claude models).
-- **Pending:** wave2c, the 240k-step re-runs of arm 3, folds 0–2 (Addendum 4). Until they land, the arm-3 rows for those folds come from the plateau-stopped runs and are marked as such.
+**Status (2026-10-13): all runs complete.**
+- wave 1 (77 runs) and wave 2 (48 runs);
+- post-hoc arms 1–3 (5 + 5 + 5 runs), plus wave2c: arm 3, folds 0–2 re-run to the 240k cap (3 runs, Addendum 4). The 240k runs are the primary arm-3 rows; the 36–38k runs are kept as a training-length comparison;
+- E6 (800 items × 4 Claude models).
 
 Figures: `results/figures/` (PNG + PDF). Full tables: the generated block at the end of this file, also written to `results/report_tables.md` and `results/summary.json` by `python -m witnesses.analyze`.
 
@@ -32,7 +30,7 @@ The pre-registered outcome table maps the E2 results as follows:
 - **Combined queries, E2-full:** both fail. By the table this is "H_arch-like (matched L1 also fails)" in folds 0 and 2, the only folds whose frozen held-out split contains combined do() items.
   - The pre-registered safeguard, "no negative conclusion unless the matched COND head passes", therefore blocks an H_1¾ reading.
 
-**Post hoc: the combined-query weakness is a gap in the training distribution, not in capacity or training length.** Three pieces of evidence:
+**Post hoc: the combined-query weakness of the pre-registered runs is a gap in the training distribution, not in capacity or training length.** With samples, closing that gap transfers to most unseen graphs but not all (next subsection). Three pieces of evidence:
 1. **Not training length.**
    - In the pre-registered runs, combined-conditioning KL is flat between 20k and 240k steps. For example, E2-full fold 1 seed 0 goes 0.315 → 0.314 → 0.308 → 0.301 → 0.303 bits at 20k / 60k / 120k / 180k / 240k.
    - The 10 E2-full runs that ran to the 240k cap end at 0.27 bits on both topology sets.
@@ -40,12 +38,30 @@ The pre-registered outcome table maps the E2 results as follows:
 2. **Not capacity.** The sweeps (E2-0: 0.8M–14M parameters, 9 sizes; E2-full: 0.8M / 4.8M / 14M) show no trend in combined-query error.
 3. **Training on the query type fixes it** (arms 1 and 3). Replacing 25% of training queries with queries whose two elements both matter leaves the eval sets provably unchanged, and:
    - **E2-0:** two-variable conditioning GC 0.98 on training and on unseen graphs (from 0.37 / 0.40). Relaxed combined-do() KL where both pinned variables are parents of the target drops from 0.071 to 0.0001 bits.
-   - **E2-full, folds trained to 240k (3 and 4):**
-     - combined-conditioning KL 0.003–0.006 bits on both topology sets (from about 0.27);
-     - balanced strict combined do() GC 0.91–0.93 on training topologies (pre-registered runs in the same folds: −0.36 to 0.46, mean −0.09).
-   - **E2-full, folds 0–2:** the plateau rule stopped them at 36–38k steps, at 0.017–0.092 bits. They are being re-run to 240k (Addendum 4). Folds 0 and 2 are the only folds whose held-out topologies admit strict combined do() queries.
+   - **E2-full (arm 3), all five folds at 240k steps:**
+     - **Training topologies, every fold:** combined-conditioning KL 0.003–0.005 bits (from about 0.28), and balanced strict combined do() GC 0.91–0.94 (pre-registered runs: mean −0.04).
+     - **Held-out topologies:** combined-conditioning KL ≤ 0.009 bits in folds 0, 2, 3 and 4. Fold 1 stays at 0.110 bits (slope 0.76).
+     - **Held-out strict combined do()**, which only folds 0 and 2 can test: GC 0.89 in fold 0 and 0.25 in fold 2 (balanced sets).
+     - **Training length:** the 240k re-runs cut composite error on training topologies about 5× relative to the 36–38k runs. The two held-out failures did not shrink: fold 1's combined conditioning went 0.092 → 0.110 bits (frozen set), and fold 2's combined do() 0.143 → 0.123 bits (balanced set).
+   - By the Addendum 3 criteria, 4 of 5 folds pass combined conditioning. The pooled held-out criteria fail: KL 0.026 against ≤ 0.02, driven by fold 1, and combined do() GC 0.51 against ≥ 0.8 (generated tables).
 
-**What this changes:** once trained on two-element queries, a combined query is no longer an *untrained query type*. The held-out graphs are still unseen. What transfers to unseen graphs is the two-element computation, once the query type is in the training distribution.
+**What this changes:** once trained on two-element queries, a combined query is no longer an *untrained query type*. The held-out graphs are still unseen. With probability tables (arm 1), the two-element computation transfers to every held-out graph. With samples (arm 3), it transfers to most held-out graphs, but not all. Two-variable conditioning is within 0.03 bits for 20 of the 22 held-out topologies that have such items. Combined do() transfers in one of the two folds that can test it.
+
+### Where two-element training does not transfer (post hoc, exploratory)
+
+The by-topology table in the generated block breaks the held-out error down. The two failures are each confined to specific graph shapes, and neither shrank with 6× more training.
+
+- **Fold 1, two-variable conditioning: T9 and T15** carry the error, at 0.32 and 0.09 bits. The fold's other held-out topologies, T11 and T14, are at 0.009 and 0.024.
+  - T9 and T15 are the only two of the 25 topologies in which an unshielded collider has a child (0 → 2 ← 1, with 2 → 3).
+  - Fold 1 holds out both, so its training set contains no graph with that pattern. That is consistent with the model failing on a structural pattern it never saw. It is an observation, not a tested explanation.
+  - The CPT-token model (E2-0 arm 1) handles the same held-out graphs at 0.008 and 0.035 bits.
+  - Fold 1's held-out composite error *rises* during training: 0.04–0.06 bits over the first 24k steps (minimum 0.040), then 0.110 at 240k (figure `e2_two_element`, right panel).
+- **Fold 2, combined do(): T24.**
+  - Across the whole design, exactly one strict combined do() query type exists: target 3 under do(0), do(2), where 1 is a mediator from 0 and a confounder of 2 and 3. It occurs in T20 and T24 only.
+  - Both graphs give the same truncated-factorization answer, Σ₁ P(1 | 0) P(3 | 1, 2). They differ only by T24's extra edge 0 → 2, into an intervened node.
+  - Fold 0 trains on the T24 version and generalizes to T20 (GC 0.89). Fold 2 trains on the T20 version and fails on T24 (GC 0.25). Its answers sit about a quarter of the way from the conditioning answer to the interventional one (slope 0.23).
+  - On those same T24 graphs, two-variable conditioning passes (0.002 bits). The CPT-token model gets the T24 items right (0.0001 bits).
+  - So in this one fold, the pattern the pre-registered outcome table assigns to H_1¾ appears: combined interventions fail on an unseen graph while the matched conditioning query passes and in-distribution passes. It is one seed, one topology, one query type, in a post-hoc arm, so it is reported as an observation, not as a verdict.
 
 **What it doesn't say:** nothing here is about learning causal structure from observational data. In E2 and E2-0 the graph is given, and training targets are the true interventional quantities.
 
@@ -69,7 +85,7 @@ The causal assumptions entered through the training distribution: a prior over D
 Under the pre-registered policy, capped runs are never counted as negative evidence, so the passes of capped runs stand.
 
 The plateau rule watches each experiment's headline metric. For E2 that is single-query KL, which levels off long before composite-query performance does. Two consequences:
-- it stopped arm 3's folds 0–2 early (Addendum 4);
+- it stopped arm 3's folds 0–2 early, so they were re-run to the cap (Addendum 4);
 - it makes "converged" uninformative about composite queries. That is why the flat composite trajectories above are reported alongside the labels.
 
 ## Deviations from the plan, and why
@@ -78,7 +94,7 @@ The plateau rule watches each experiment's headline metric. For E2 that is singl
 2. **E2-full oracle bug (Addendum 2).** Beta(¼, ¼) underflow gave 0/0 in the Monte Carlo conditional oracles for 1 of 1,000 combined items in folds 2–3. This was fixed, and only the NaN entries were recomputed (`scripts/rescore_e2_samples.py`). All E2-full numbers here use the repaired sets.
 3. **E4 coverage (Addendum 1 A).** Bin-edge interval ends over-cover even for the exact oracle. The interpolated version is reported as a labeled diagnostic; the as-implemented FAIL stands.
 4. **Capacity sweep seeds (Addendum 1 B).** 2 seeds, unconditionally.
-5. **Arm-3 stopping rule (Addendum 4).** Folds 0–2 are re-run with `min_steps` = cap.
+5. **Arm-3 stopping rule (Addendum 4).** Folds 0–2 were re-run with `min_steps` = cap (wave2c). As fixed in advance, the 240k runs are the primary rows whatever they showed, and the 36–38k runs are kept as a comparison.
 6. **Correction to Addendum 2.** With the main analysis's aggregation, the 256-bin coverage prediction failed in 3 of 4 cells, not 2 (HID-MED by 0.0001).
 
 ## Predictions that failed
@@ -94,7 +110,7 @@ The plateau rule watches each experiment's headline metric. For E2 that is singl
   - The model matches the Bayes oracle *under the training prior*, which itself gives held-out programs zero prior mass.
   - So the pre-registered L3-specific-deficit reading does not apply.
 - **E6, Haiku 4.5:** it did better than predicted on V1-blind, V2-stated, V2-unstated and V3 "not identifiable".
-- **Arm 3 (so far):** held-out combined-conditioning KL ≤ 0.02 fails on the pooled primary runs (0.029) because of fold 1's plateau-stopped run. This will be re-scored when the re-runs land.
+- **Arm 3 (E2-full two-element training, post hoc, 240k steps):** pooled held-out combined-conditioning KL 0.026 against ≤ 0.02, because of fold 1 (0.110; the other four folds are ≤ 0.009). Pooled held-out combined do() GC 0.51 against ≥ 0.8: fold 0 0.88, fold 2 0.13 (frozen sets; balanced 0.89 / 0.25). Addendum 4's expectation for folds 0 and 2 (KL ≤ 0.01 and slope ≥ 0.95 on combined conditioning) held.
 
 ## E6: Claude verbal probe (descriptive)
 
@@ -303,32 +319,62 @@ Runs: 5 runs (1 converged, 4 hit the cap); one seed per fold, CIs resample runs
 
 ### Post hoc (Addenda 3–4) — E2-full with two-element training queries
 
-Runs: 5 runs (3 converged, 2 hit the cap)
+Runs: 5 runs (0 converged, 5 hit the cap)
 
-Primary runs: 2/5 folds meet the Addendum 3 combined-conditioning criteria. One seed per fold; CIs resample runs. Folds [0, 1, 2]: 240k re-run pending (Addendum 4); the plateau-stopped runs stand in.
+Primary runs: 4/5 folds meet the Addendum 3 combined-conditioning criteria. One seed per fold; CIs resample runs. Second table (post hoc, exploratory): balanced held-out two-element KL by topology. 'collider with a child' = an unshielded collider whose middle node has a child; 'in training' = some training topology of that fold has one too.
 
 | fold | run | steps (stop) | cond slope train / held-out | cond KL train / held-out (bits) | combined do() GC train / held-out | [balanced] strict combined do() GC train / held-out | single-query GC in-dist / held-out do() | Addendum 3 cond criteria |
 |---|---|---|---|---|---|---|---|---|
+| 0 | 240k re-run (samples_f0_comp25full) | 240k (cap) | 0.994 / 0.986 | 0.0033 / 0.0086 | 0.95 / 0.88 | 0.94 / 0.89 | 0.996 / 0.951 | PASS |
 | 0 | arm 3 (samples_f0_comp25) | 36k (plateau) | 0.973 / 0.971 | 0.0166 / 0.0228 | -0.34 / 0.39 | 0.05 / 0.38 | 0.970 / 0.941 | miss |
+| 1 | 240k re-run (samples_f1_comp25full) | 240k (cap) | 0.994 / 0.761 | 0.0037 / 0.1097 | 0.95 / nan | 0.94 / nan | 0.992 / 0.988 | miss |
 | 1 | arm 3 (samples_f1_comp25) | 36k (plateau) | 0.960 / 0.812 | 0.0227 / 0.0919 | 0.56 / nan | 0.22 / nan | 0.923 / 0.951 | miss |
+| 2 | 240k re-run (samples_f2_comp25full) | 240k (cap) | 0.992 / 0.991 | 0.0039 / 0.0042 | 0.96 / 0.13 | 0.92 / 0.25 | 0.993 / 0.989 | PASS |
 | 2 | arm 3 (samples_f2_comp25) | 38k (plateau) | 0.964 / 0.951 | 0.0197 / 0.0216 | 0.57 / -0.27 | 0.33 / 0.13 | 0.969 / 0.956 | miss |
 | 3 | arm 3 (samples_f3_comp25) | 240k (cap) | 0.989 / 0.984 | 0.0041 / 0.0061 | 0.92 / nan | 0.93 / nan | 0.989 / 0.992 | PASS |
 | 4 | arm 3 (samples_f4_comp25) | 240k (cap) | 0.992 / 0.994 | 0.0046 / 0.0030 | 0.85 / nan | 0.91 / nan | 0.994 / 0.983 | PASS |
 
+| fold | held-out topology | collider with a child | query | n | KL arm 3 stopped at 36–38k (bits) | KL at 240k (bits) | E2-0 arm 1, CPT tokens (bits) |
+|---|---|---|---|---|---|---|---|
+| 0 | T13 (3 edges) | no | two-variable conditioning | 60 | 0.0293 | 0.0085 | 0.0020 |
+| 0 | T19 (4 edges) | no | two-variable conditioning | 129 | 0.0207 | 0.0085 | 0.0223 |
+| 0 | T20 (4 edges) | no | two-variable conditioning | 111 | 0.0174 | 0.0058 | 0.0170 |
+| 0 | T20 (4 edges) | no | strict combined do() | 300 | 0.0942 | 0.0162 | 0.0001 |
+| 1 | T9 (3 edges) | yes (not in training) | two-variable conditioning | 72 | 0.2644 | 0.3211 | 0.0076 |
+| 1 | T11 (3 edges) | no | two-variable conditioning | 43 | 0.0300 | 0.0087 | 0.0014 |
+| 1 | T14 (4 edges) | no | two-variable conditioning | 104 | 0.0285 | 0.0242 | 0.0057 |
+| 1 | T15 (4 edges) | yes (not in training) | two-variable conditioning | 81 | 0.0738 | 0.0904 | 0.0351 |
+| 2 | T5 (2 edges) | no | two-variable conditioning | 25 | 0.0407 | 0.0022 | 0.0033 |
+| 2 | T8 (3 edges) | no | two-variable conditioning | 83 | 0.0284 | 0.0088 | 0.0218 |
+| 2 | T12 (3 edges) | no | two-variable conditioning | 56 | 0.0209 | 0.0054 | 0.0009 |
+| 2 | T21 (4 edges) | no | two-variable conditioning | 60 | 0.0179 | 0.0035 | 0.0060 |
+| 2 | T24 (5 edges) | no | two-variable conditioning | 76 | 0.0077 | 0.0021 | 0.0154 |
+| 2 | T24 (5 edges) | no | strict combined do() | 300 | 0.1427 | 0.1226 | 0.0001 |
+| 3 | T3 (2 edges) | no | two-variable conditioning | 27 | — | 0.0022 | 0.0026 |
+| 3 | T6 (3 edges) | no | two-variable conditioning | 79 | — | 0.0278 | 0.0103 |
+| 3 | T10 (3 edges) | no | two-variable conditioning | 43 | — | 0.0048 | 0.0035 |
+| 3 | T16 (4 edges) | no | two-variable conditioning | 75 | — | 0.0031 | 0.0133 |
+| 3 | T23 (5 edges) | no | two-variable conditioning | 76 | — | 0.0016 | 0.0142 |
+| 4 | T2 (2 edges) | no | two-variable conditioning | 56 | — | 0.0027 | 0.0133 |
+| 4 | T7 (3 edges) | no | two-variable conditioning | 46 | — | 0.0009 | 0.0213 |
+| 4 | T17 (4 edges) | no | two-variable conditioning | 67 | — | 0.0071 | 0.0101 |
+| 4 | T18 (4 edges) | no | two-variable conditioning | 61 | — | 0.0028 | 0.0108 |
+| 4 | T22 (5 edges) | no | two-variable conditioning | 70 | — | 0.0020 | 0.0071 |
+
 | criterion | estimate | threshold | verdict |
 |---|---|---|---|
-| combined conditioning slope (model−L2) on (L1−L2), training topologies (base E2-full: 0.369 [0.343, 0.394]) | 0.976 [0.964, 0.987] | ≥ 0.9 | prediction held |
-| combined conditioning slope (model−L2) on (L1−L2), held-out topologies (base E2-full: 0.393 [0.358, 0.423]) | 0.943 [0.876, 0.985] | ≥ 0.9 | prediction held (CI crosses) |
-| combined conditioning KL to Bayes (bits), training topologies (base E2-full: 0.2781 [0.2617, 0.2931]) | 0.0136 [0.0069, 0.0203] | ≤ 0.02 | prediction held (CI crosses) |
-| combined conditioning KL to Bayes (bits), held-out topologies (base E2-full: 0.2758 [0.2549, 0.2983]) | 0.0291 [0.0080, 0.0638] | ≤ 0.02 | prediction failed (CI crosses) |
-| combined do() GC, training topologies (folds whose frozen split has do() items) | 0.510 [0.074, 0.835] | ≥ 0.8 | prediction failed (CI crosses) |
-| combined do() GC, held-out topologies (folds whose frozen split has do() items) | 0.057 [-0.273, 0.387] | ≥ 0.8 | prediction failed |
-| no single-query regression: GC, in-distribution do() | 0.969 [0.946, 0.988] | ≥ 0.85 | prediction held |
-| no single-query regression: GC, held-out do() | 0.964 [0.948, 0.981] | ≥ 0.8 | prediction held |
-| [balanced] two-variable conditioning, training topologies — KL bits (base E2-full: 0.2878 [0.2679, 0.3062]) | 0.0138 [0.0066, 0.0209] | (reported) |  |
-| [balanced] strict combined do(A, B) GC, training topologies (base E2-full: -0.039 [-0.210, 0.140]) | 0.487 [0.183, 0.800] | (reported) |  |
-| [balanced] two-variable conditioning, held-out topologies — KL bits (base E2-full: 0.2728 [0.2523, 0.2931]) | 0.0304 [0.0092, 0.0634] | (reported) |  |
-| [balanced] strict combined do(A, B) GC, held-out topologies (base E2-full: 0.175 [0.012, 0.336]) | 0.256 [0.129, 0.382] | (reported) |  |
+| combined conditioning slope (model−L2) on (L1−L2), training topologies (base E2-full: 0.369 [0.343, 0.394]) | 0.992 [0.990, 0.994] | ≥ 0.9 | prediction held |
+| combined conditioning slope (model−L2) on (L1−L2), held-out topologies (base E2-full: 0.393 [0.358, 0.423]) | 0.943 [0.852, 0.991] | ≥ 0.9 | prediction held (CI crosses) |
+| combined conditioning KL to Bayes (bits), training topologies (base E2-full: 0.2781 [0.2617, 0.2931]) | 0.0039 [0.0036, 0.0043] | ≤ 0.02 | prediction held |
+| combined conditioning KL to Bayes (bits), held-out topologies (base E2-full: 0.2758 [0.2549, 0.2983]) | 0.0263 [0.0041, 0.0684] | ≤ 0.02 | prediction failed (CI crosses) |
+| combined do() GC, training topologies (folds whose frozen split has do() items) | 0.926 [0.884, 0.953] | ≥ 0.8 | prediction held |
+| combined do() GC, held-out topologies (folds whose frozen split has do() items) | 0.505 [0.129, 0.880] | ≥ 0.8 | prediction failed (CI crosses) |
+| no single-query regression: GC, in-distribution do() | 0.993 [0.991, 0.995] | ≥ 0.85 | prediction held |
+| no single-query regression: GC, held-out do() | 0.981 [0.966, 0.990] | ≥ 0.8 | prediction held |
+| [balanced] two-variable conditioning, training topologies — KL bits (base E2-full: 0.2878 [0.2679, 0.3062]) | 0.0037 [0.0031, 0.0044] | (reported) |  |
+| [balanced] strict combined do(A, B) GC, training topologies (base E2-full: -0.039 [-0.210, 0.140]) | 0.926 [0.918, 0.936] | (reported) |  |
+| [balanced] two-variable conditioning, held-out topologies — KL bits (base E2-full: 0.2728 [0.2523, 0.2931]) | 0.0272 [0.0047, 0.0692] | (reported) |  |
+| [balanced] strict combined do(A, B) GC, held-out topologies (base E2-full: 0.175 [0.012, 0.336]) | 0.573 [0.252, 0.894] | (reported) |  |
 | (control) pre-registered E2-full runs that also ran to the 240k cap (10): combined conditioning KL, training topologies (bits) | 0.2750 [0.2560, 0.2930] | (reported) |  |
 | (control) pre-registered E2-full runs that also ran to the 240k cap (10): combined conditioning KL, held-out topologies (bits) | 0.2658 [0.2405, 0.2970] | (reported) |  |
 
