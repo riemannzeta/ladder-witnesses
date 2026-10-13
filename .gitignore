@@ -10,3 +10,4 @@ blog/preview.html
 .env
 results/**/*_smoke/
 results/e4/bins256_*/eval_preds.npz
+scripts/aws_env.local.sh

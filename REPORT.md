@@ -1,6 +1,6 @@
 # Report: witness pairs on Pearl's ladder
 
-Pre-registration: [`PREDICTIONS.md`](PREDICTIONS.md). The main document was committed before any training (`3f434c8`); Addenda 1–4 record every later change, each written before the runs it governs. Every pre-registered criterion is reported here exactly as defined, with its verdict. Anything that was not pre-registered is labeled **post hoc**.
+Pre-registration: [`PREDICTIONS.md`](PREDICTIONS.md). The main document was committed before any training (`b48faf9`); Addenda 1–4 record every later change, each written before the runs it governs. Every pre-registered criterion is reported here exactly as defined, with its verdict. Anything that was not pre-registered is labeled **post hoc**.
 
 **Status (2026-10-13): all runs complete.**
 - wave 1 (77 runs) and wave 2 (48 runs);

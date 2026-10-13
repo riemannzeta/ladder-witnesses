@@ -38,5 +38,6 @@ None of this refutes the CHT, which the design relies on. Training targets were 
 
 - **Plan:** [`PLAN.md`](PLAN.md). **Figures:** `results/figures/`. **Blog post source:** `blog/post.src.md`.
 - **Reproduce:** `uv sync --group dev && uv run pytest`, then `python -m witnesses.train --config configs/<exp>/<cond>.yaml --seed 0` (add `--smoke` for a 1-minute pipeline check).
+- **History:** AWS instance identifiers were redacted from the git history before publication. Commit dates are unchanged; [`COMMIT_MAP.tsv`](COMMIT_MAP.tsv) maps original commit IDs to published ones. The GPU helper scripts read machine-specific values from an untracked `scripts/aws_env.local.sh`.
 
 MIT licensed. © 2026 Michael Frank Martin.

@@ -2,7 +2,7 @@
 
 *What the Causal Hierarchy Theorem does — and doesn't — say about transformers, tested in a wind tunnel.*
 
-<!-- DRAFT for CP2. Numbers come from REPORT.md. -->
+<!-- Numbers come from REPORT.md. -->
 
 ## Stuck on rung one?
 

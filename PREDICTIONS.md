@@ -152,7 +152,7 @@ Also nothing about do-calculus beyond the truncated factorization, about N beyon
 
 ## Addendum 1 (2026-10-06): changes after wave 1, written before any wave-2 run
 
-Everything above this line was committed before any training (commit `3f434c8`). This addendum records every change made after seeing the wave-1 results (E1, E3, E4, E2-0). Every pre-registered metric is still reported exactly as defined above; nothing here replaces one.
+Everything above this line was committed before any training (commit `b48faf9`). This addendum records every change made after seeing the wave-1 results (E1, E3, E4, E2-0). Every pre-registered metric is still reported exactly as defined above; nothing here replaces one.
 
 ### A. Evaluation changes made after seeing wave-1 results (post hoc)
 1. **E2 combined-query sets held too few do() items.** The frozen combined split draws do() and conditioning queries 50/50, then applies the pre-registered acceptance rules (both elements move the answer by > 0.05, and conditioning differs from intervening by > 0.05). In 4-node graphs with in-degree ≤ 2, only 2 of the 25 topologies (T20, T24) admit any do() query that passes, so the frozen split holds 0–53 do() items per fold and none at all in held-out folds 1, 3 and 4.
