@@ -2,7 +2,7 @@
 # Machine-specific values live in the untracked scripts/aws_env.local.sh, e.g.
 #   INSTANCE_ID=i-0123456789abcdef0
 #   TAILSCALE_IP=100.x.y.z        # optional; falls back to the instance's public IP
-_aws_env_local="$(dirname "${BASH_SOURCE[0]}")/aws_env.local.sh"
+_aws_env_local="$(dirname "${BASH_SOURCE[0]:-$0}")/aws_env.local.sh"
 [ -f "$_aws_env_local" ] && source "$_aws_env_local"
 : "${INSTANCE_ID:?set INSTANCE_ID in scripts/aws_env.local.sh}"
 REGION=${REGION:-us-west-2}
